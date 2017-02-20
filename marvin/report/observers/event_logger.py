@@ -17,8 +17,8 @@ class EventLogger(object):
         self._level += 1
         step = data['step']
 
-        print "%s%s: %s (%s)" % (self._indent * self._level, step.name, step.description, ", ".join(step.tags))
         print "----------------------------------------------------------------"
+        print "%s%s: %s (%s)" % (self._indent * self._level, step.name, step.description, ", ".join(step.tags))
 
     def on_step_ended(self, _event, data):
         step = data['step']
@@ -54,5 +54,6 @@ class EventLogger(object):
         elif status == 'FAILED':
             status = Fore.RED + status + Fore.RESET
 
+        print "----------------------------------------------------------------"
         print "[%s] %s - %s" % (test_header, test_script.name, status)
 

@@ -1,0 +1,10 @@
+{
+    "setup": {},
+
+    "iterations": [
+        {"website": "http://apple.com", "expected_title": "Apple"},
+        {"website": "http://google.com", "expected_title": "Google"}
+    ],
+
+    "tear_down": {}
+}
