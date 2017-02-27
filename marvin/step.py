@@ -2,6 +2,7 @@ import time
 import sys
 
 from marvin.report.publisher import Publisher, Events
+from marvin.exceptions import StepShouldSkip
 
 class Step(object):
     """Marvin's Step class"""
@@ -54,7 +55,7 @@ class Step(object):
          * All the tags defined in this step's superclasses
         """
         return self._runtime_tags + self.__class__._class_tags()
-       
+
     def tag(self, *tags):
         """
         Add one or more tags to the step's instance dinamically
@@ -103,9 +104,12 @@ class Step(object):
             result = self.run(*args, **kargs)
             if (self._do_after):
                 self._do_after(self, result)
+        except StepShouldSkip, error:
+            status = "SKIPPED"
+            result = error.message
         except:
             exc_info = sys.exc_info()
-            
+
         if self._should_fail(exc_info):
             status = "FAILED"
 

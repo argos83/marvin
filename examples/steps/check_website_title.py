@@ -1,7 +1,9 @@
 from marvin import Step
+from marvin.exceptions import StepShouldSkip
 
 import requests
 import bs4
+
 
 class CheckWebsiteTitle(Step):
 
@@ -9,6 +11,10 @@ class CheckWebsiteTitle(Step):
     DESCRIPTION = "Checks if a website has an expected title"
 
     def run(self, website, expected_title):
+
+        if expected_title == "Google":
+            raise StepShouldSkip("Testing skipping")
+
         response = requests.get(website)
         html = bs4.BeautifulSoup(response.text, "html.parser")
         real_title = html.title.text
@@ -17,5 +23,7 @@ class CheckWebsiteTitle(Step):
                 "Title '%s' is not equal to expected '%s'"
                 % (expected_title, real_title)
             )
+
+
 
         return real_title

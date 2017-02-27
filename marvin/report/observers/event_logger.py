@@ -1,7 +1,8 @@
-from colorama import Fore
+from colorama import Fore, Back
 
 from marvin import Publisher
 from marvin import Events
+
 
 class EventLogger(object):
 
@@ -29,6 +30,8 @@ class EventLogger(object):
             status = Fore.GREEN + status + Fore.RESET
         elif status == 'FAILED':
             status = Fore.RED + status + Fore.RESET
+        elif status == 'SKIPPED':
+            status = Fore.BLUE + Back.WHITE + status + Back.RESET + Fore.RESET
 
         print "%s[%s] %s (%d ms)" % (self._indent * self._level, status, step.name, duration)
         self._level -= 1
@@ -41,7 +44,6 @@ class EventLogger(object):
         print "[%s] %s - %s" % (
             test_header, test_script.name, test_script.description
         )
-
 
     def on_test_ended(self, _event, data):
         test_script = data['test_script']
@@ -56,4 +58,3 @@ class EventLogger(object):
 
         print "----------------------------------------------------------------"
         print "[%s] %s - %s" % (test_header, test_script.name, status)
-
