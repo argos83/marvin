@@ -8,5 +8,5 @@ setup(name='marvin',
       author_email='argos83@gmail.com',
       packages=find_packages(exclude=("tests")),
       include_package_data=True,
-      install_requires=['colorama'],
+      install_requires=['colorama', 'requests'],
       zip_safe=False)
