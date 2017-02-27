@@ -1,7 +1,7 @@
 """Marvin's Exceptions"""
 
 
-class StepShouldSkip(Exception):
+class StepSkipped(Exception):
     """
     This exception is raised when a step is flagged to be skipped
     """

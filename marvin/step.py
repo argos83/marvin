@@ -2,7 +2,8 @@ import time
 import sys
 
 from marvin.report.publisher import Publisher, Events
-from marvin.exceptions import StepShouldSkip
+from marvin.exceptions import StepSkipped
+
 
 class Step(object):
     """Marvin's Step class"""
@@ -93,6 +94,10 @@ class Step(object):
         """Step's logic implementation (to be redefined by sub-classes)"""
         raise NotImplementedError("Method run must be redefined")
 
+    def skip(self, message=""):
+        """Invoke this method if you want the step to skip"""
+        raise StepSkipped(message)
+
     # Private methods
 
     def _execute(self, *args, **kargs):
@@ -104,7 +109,7 @@ class Step(object):
             result = self.run(*args, **kargs)
             if (self._do_after):
                 self._do_after(self, result)
-        except StepShouldSkip, error:
+        except StepSkipped, error:
             status = "SKIPPED"
             result = error.message
         except:
