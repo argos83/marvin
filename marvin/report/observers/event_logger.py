@@ -1,5 +1,8 @@
+from colorama import Fore, Back
+
 from marvin import Publisher
 from marvin import Events
+
 
 class EventLogger(object):
 
@@ -15,23 +18,43 @@ class EventLogger(object):
         self._level += 1
         step = data['step']
 
+        print "----------------------------------------------------------------"
         print "%s%s: %s (%s)" % (self._indent * self._level, step.name, step.description, ", ".join(step.tags))
 
     def on_step_ended(self, _event, data):
         step = data['step']
         duration = data['timestamp'] - data['start_time']
 
-        print "%s[%s] %s (%d ms)" % (self._indent * self._level, data['status'], step.name, duration)
+        status = data['status']
+        if status == 'PASSED':
+            status = Fore.GREEN + status + Fore.RESET
+        elif status == 'FAILED':
+            status = Fore.RED + status + Fore.RESET
+        elif status == 'SKIPPED':
+            status = Fore.BLUE + Back.WHITE + status + Back.RESET + Fore.RESET
+
+        print "%s[%s] %s (%d ms)" % (self._indent * self._level, status, step.name, duration)
         self._level -= 1
 
     def on_test_started(self, _event, data):
         test_script = data['test_script']
-        print "[TEST] %s - %s" % (test_script.name, test_script.description)
-    
+
+        test_header = Fore.CYAN + 'TEST' + Fore.RESET
+
+        print "[%s] %s - %s" % (
+            test_header, test_script.name, test_script.description
+        )
 
     def on_test_ended(self, _event, data):
         test_script = data['test_script']
-        print "[TEST] %s - %s" % (test_script.name, data['status'])
-        
 
+        test_header = Fore.CYAN + 'TEST' + Fore.RESET
 
+        status = data['status']
+        if status == 'PASSED':
+            status = Fore.GREEN + status + Fore.RESET
+        elif status == 'FAILED':
+            status = Fore.RED + status + Fore.RESET
+
+        print "----------------------------------------------------------------"
+        print "[%s] %s - %s" % (test_header, test_script.name, status)

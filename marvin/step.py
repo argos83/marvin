@@ -2,6 +2,12 @@ import time
 import sys
 
 from marvin.report.publisher import Publisher, Events
+from marvin.exceptions import StepSkipped
+
+STATUS_PASSED = "PASSED"
+STATUS_FAILED = "FAILED"
+STATUS_SKIPPED = "SKIPPED"
+
 
 class Step(object):
     """Marvin's Step class"""
@@ -54,7 +60,7 @@ class Step(object):
          * All the tags defined in this step's superclasses
         """
         return self._runtime_tags + self.__class__._class_tags()
-       
+
     def tag(self, *tags):
         """
         Add one or more tags to the step's instance dinamically
@@ -83,7 +89,7 @@ class Step(object):
                 "timestamp": int(time.time() * 1000)}
         Publisher.notify(Events.STEP_ENDED, data)
 
-        if exc_info and status == "FAILED":
+        if exc_info and status == STATUS_FAILED:
             raise exc_info[0], exc_info[1], exc_info[2]
 
         return result
@@ -92,10 +98,26 @@ class Step(object):
         """Step's logic implementation (to be redefined by sub-classes)"""
         raise NotImplementedError("Method run must be redefined")
 
+    def skip(self, message=""):
+        """Invoke this method if you want the step to skip"""
+
+        # Build payload
+        data = {"step": self,
+                "status": STATUS_SKIPPED,
+                "timestamp": int(time.time() * 1000)}
+
+        # Notify subscribers
+        Publisher.notify(Events.STEP_SKIPPED, data)
+
+        # Raise the proper exception
+        raise StepSkipped(message)
+
+    #
     # Private methods
+    #
 
     def _execute(self, *args, **kargs):
-        status = "PASSED"
+        status = STATUS_PASSED
         exc_info = None
         result = None
 
@@ -103,11 +125,14 @@ class Step(object):
             result = self.run(*args, **kargs)
             if (self._do_after):
                 self._do_after(self, result)
+        except StepSkipped, error:
+            status = STATUS_SKIPPED
+            result = error.message
         except:
             exc_info = sys.exc_info()
-            
+
         if self._should_fail(exc_info):
-            status = "FAILED"
+            status = STATUS_FAILED
 
         return result, status, exc_info
 
