@@ -1,9 +1,12 @@
 import time
 import sys
 
-from marvin.report.publisher import Publisher, Events
+from marvin.core.step_running_context import StepRunningContext
+from marvin.core.reportable import Reportable
+from marvin.report import Publisher, Events
 
-class TestScript(object):
+
+class TestScript(StepRunningContext, Reportable):
     """
     Base TestScript class to be extended by specific tests.
     Subclasses must re-implement the 'run' method, and can re-implement (if needed)
@@ -23,7 +26,9 @@ class TestScript(object):
         * The 'tear_down' block.
     """
 
-    def __init__(self, data_provider):
+    def __init__(self, data_provider, parent_context):
+        StepRunningContext.__init__(self, parent_context=parent_context)
+        Reportable.__init__(self)
         self._data_provider = data_provider
 
     def setup(self, _data):
@@ -35,17 +40,6 @@ class TestScript(object):
     def tear_down(self, _data):
         pass
 
-    @property
-    def name(self):
-        return getattr(self.__class__, "NAME", self.__class__.__name__)
-
-    @property
-    def description(self):
-        return getattr(self.__class__, "DESCRIPTION", "")
-
-    @property
-    def tags(self):
-        return getattr(self.__class__, "TAGS", [])
 
     def execute(self):
         start = int(time.time() * 1000)
@@ -69,7 +63,7 @@ class TestScript(object):
         Publisher.notify(Events.TEST_ENDED, data)
 
         if status == "FAILED" and exceptions:
-            raise exceptions[0][0], exceptions[0][1], exceptions[0][2]
+            raise exceptions[0][0]
 
     # private methods
 

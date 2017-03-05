@@ -1,21 +1,18 @@
-from events import Events
+from marvin.report import EventType
 
-class _Publisher(object):
+
+class Publisher(object):
 
     def __init__(self):
         self._observers = {}
-        for event in Events.ALL:
-            self._observers[event] = []
         
-    def subscribe(self, event, observer):
-        self._observers[event].append(observer)
+    def subscribe(self, observer, *event_types):
+        for event_type in event_types:
+            self._observers[event_type].append(observer)
 
     def subscribe_all(self, observer):
-        for event in Events.ALL:
-            self.subscribe(event, observer)
+        self.subscribe(observer, *EventType.ALL)
 
-    def notify(self, event, data):
-        for observer in self._observers[event]:
-            observer(event, data)
-
-Publisher = _Publisher()
+    def notify(self, event):
+        for observer in self._observers[event.event_type]:
+            observer(event)

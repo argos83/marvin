@@ -1,7 +1,7 @@
 import time
 import sys
 
-from marvin.report.publisher import Publisher, Events
+from marvin.report import Publisher, Events
 from marvin.exceptions import StepSkipped
 
 STATUS_PASSED = "PASSED"
@@ -90,7 +90,7 @@ class Step(object):
         Publisher.notify(Events.STEP_ENDED, data)
 
         if exc_info and status == STATUS_FAILED:
-            raise exc_info[0], exc_info[1], exc_info[2]
+            raise exc_info[0]
 
         return result
 
@@ -125,7 +125,7 @@ class Step(object):
             result = self.run(*args, **kargs)
             if (self._do_after):
                 self._do_after(self, result)
-        except StepSkipped, error:
+        except StepSkipped as error:
             status = STATUS_SKIPPED
             result = error.message
         except:

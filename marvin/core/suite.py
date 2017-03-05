@@ -1,8 +1,15 @@
 import time
 
-from marvin.report.publisher import Publisher, Events
+from marvin.core.context import Context
+from marvin.core.reportable import Reportable
+from marvin.report import Publisher, Events
 
-class Suite(object):
+
+class Suite(Context, Reportable):
+
+    def __init__(self):
+        Context.__init__(self, parent_context=None)
+        Reportable.__init__(self)
 
     def execute(self):
         start = int(time.time() * 1000)
