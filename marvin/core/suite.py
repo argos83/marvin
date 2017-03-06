@@ -2,7 +2,7 @@ import time
 
 from marvin.core.context import Context
 from marvin.core.reportable import Reportable
-from marvin.report import Publisher, Events
+from marvin.report import Publisher, EventType
 
 
 class Suite(Context, Reportable):

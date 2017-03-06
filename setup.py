@@ -8,5 +8,6 @@ setup(name='marvin',
       author_email='argos83@gmail.com',
       packages=find_packages(exclude=("tests")),
       include_package_data=True,
-      install_requires=['colorama', 'requests'],
+      install_requires=['colorama'],
+      tests_require=['pytest'],
       zip_safe=False)

@@ -7,7 +7,6 @@ class Context(object):
         self._ctx = parent_context
         self._publisher = self.ctx.publisher if self.ctx else Publisher()
 
-
     @property
     def ctx(self):
         return self._ctx

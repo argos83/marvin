@@ -3,7 +3,7 @@ import sys
 
 from marvin.core.step_running_context import StepRunningContext
 from marvin.core.reportable import Reportable
-from marvin.report import Publisher, Events
+from marvin.report import Publisher, EventType
 
 
 class TestScript(StepRunningContext, Reportable):
@@ -48,7 +48,7 @@ class TestScript(StepRunningContext, Reportable):
         "timestamp": start
         }
 
-        Publisher.notify(Events.TEST_STARTED, data)
+        Publisher.notify(EventType.TEST_STARTED, data)
 
         # TODO: also generate events for each execution block: setup, iterations, tear_down
 
@@ -60,7 +60,7 @@ class TestScript(StepRunningContext, Reportable):
                 "exception": exceptions,
                 "timestamp": int(time.time() * 1000)}
 
-        Publisher.notify(Events.TEST_ENDED, data)
+        Publisher.notify(EventType.TEST_ENDED, data)
 
         if status == "FAILED" and exceptions:
             raise exceptions[0][0]

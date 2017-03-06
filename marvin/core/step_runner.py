@@ -10,7 +10,7 @@ class StepRunner(object):
 
     def __init__(self, step, args, kwargs):
         self._step = step
-        self._args = args
+        self._args = list(args)  # make args mutable
         self._kwargs = kwargs
 
     def execute(self):
@@ -24,15 +24,16 @@ class StepRunner(object):
         if raise_exception:
             raise raise_exception
 
-        return result
+        return result.get()
 
     def _do_run(self):
         try:
-            result = self._step.run(*self._args, **self._kwargs)
+            result = Result(self._step.run(*self._args, **self._kwargs))
             exception = None
             status, raise_exception = self._when_no_exception()
         except Exception as e:
-            exception = result = e
+            exception = e
+            result = Result(e)
             status, raise_exception = self._when_exception(e)
         return status, result, exception, raise_exception
 
@@ -59,3 +60,17 @@ class StepRunner(object):
         if callable(expectation):
             return expectation(exception)
         return False
+
+
+class Result(object):
+    """
+    Wraps a step result so plugins can change its value even if type is immutable
+    """
+    def __init__(self, result):
+        self._result = result
+
+    def get(self):
+        return self._result
+
+    def set(self, value):
+        self._result = value
