@@ -1,6 +1,9 @@
+import pytest
+
 from marvin import Step
+from marvin.exceptions import ContextSkippedException, ExpectedExceptionNotRaised
 from marvin.report import EventType
-from stubs import DummyStep
+from tests.stubs import DummyStep, EchoStep
 
 
 def test_step_basic(ctx):
@@ -24,7 +27,7 @@ def test_steps_are_reportable(ctx):
 
     assert step.name == 'SomeStep'
     assert step.description == 'Step description'
-    assert step.tags == set(['tags', 'and', 'some', 'labels'])
+    assert step.tags == {'tags', 'and', 'some', 'labels'}
 
 
 def test_steps_can_run_other_steps(ctx):
@@ -90,3 +93,112 @@ def test_plugins_can_change_step_args_and_results(ctx):
 
     result = ctx.step(OnlyEvenNumbersSupported).execute(1, 7, text='the answer to life the universe and everything')
     assert result == 42
+
+
+def test_step_can_be_skipped(ctx):
+    observer = ctx.observer(EventType.STEP_SKIPPED, EventType.STEP_ENDED)
+
+    with pytest.raises(ContextSkippedException) as exc_info:
+        ctx.step(EchoStep).execute(action=lambda s: s.skip('Kaput'))
+
+    skip_event, end_event = observer.events
+
+    assert skip_event.exception == exc_info.value
+    assert skip_event.exception.reason == 'Kaput'
+    assert skip_event.exception.context == skip_event.step
+    assert end_event.status == 'SKIP'
+    assert end_event.exception == skip_event.exception
+
+
+def test_step_fails_when_exception_is_raised(ctx):
+    observer = ctx.observer(EventType.STEP_ENDED)
+
+    with pytest.raises(ZeroDivisionError) as exc_info:
+        ctx.step(EchoStep).execute(action=lambda _: 5 / 0)
+
+    end_event = observer.last_event
+    assert end_event.status == 'FAIL'
+    assert end_event.exception == exc_info.value
+    assert end_event.result.get() is None
+
+
+def test_step_not_re_raising_exceptions(ctx):
+    observer = ctx.observer(EventType.STEP_ENDED)
+
+    ctx.step(EchoStep).catch_exceptions.execute(action=lambda _: 5 / 0)
+    end_event = observer.last_event
+    assert end_event.status == 'FAIL'
+    assert isinstance(end_event.exception, ZeroDivisionError)
+    assert end_event.result.get() is None
+
+
+def test_step_expecting_exception_class(ctx):
+    observer = ctx.observer(EventType.STEP_ENDED)
+
+    ctx.step(EchoStep).expect_exception(ZeroDivisionError).execute(action=lambda _: 5 / 0)
+
+    end_event = observer.last_event
+    assert end_event.status == 'PASS'
+    assert isinstance(end_event.exception, ZeroDivisionError)
+    assert end_event.result.get() is None
+
+
+def test_step_expecting_exception_callable(ctx):
+    observer = ctx.observer(EventType.STEP_ENDED)
+
+    ctx.step(EchoStep).expect_exception(lambda e: str(e).startswith('Oops')).execute(runtime_error='Oops error')
+    end_event = observer.last_event
+    assert end_event.status == 'PASS'
+    assert isinstance(end_event.exception, RuntimeError)
+    assert end_event.result.get() is None
+
+
+def test_step_expecting_different_exception(ctx):
+    observer = ctx.observer(EventType.STEP_ENDED)
+
+    with pytest.raises(RuntimeError) as exc_info:
+        ctx.step(EchoStep).expect_exception(AssertionError).execute(runtime_error='different error')
+    end_event = observer.last_event
+
+    assert end_event.status == 'FAIL'
+    assert end_event.exception == exc_info.value
+    assert end_event.result.get() is None
+
+
+def test_step_expects_exception_but_nothing_raised(ctx):
+    observer = ctx.observer(EventType.STEP_ENDED)
+
+    with pytest.raises(ExpectedExceptionNotRaised) as exc_info:
+        ctx.step(EchoStep).expect_exception(ZeroDivisionError).execute(action=lambda _: 5 / 1)
+
+    end_event = observer.last_event
+    assert end_event.status == 'FAIL'
+    assert end_event.exception == exc_info.value
+    assert str(end_event.exception) == "No exception was raised, but the expectation was: %s" % ZeroDivisionError
+    assert end_event.result.get() == 5
+
+
+def test_step_matching_one_of_many_exception_expectations(ctx):
+    observer = ctx.observer(EventType.STEP_ENDED)
+
+    ctx.step(EchoStep).expect_exception(ZeroDivisionError,
+                                        AssertionError,
+                                        "not-a-valid-expectation",
+                                        lambda e: str(e) == 'bbb',
+                                        lambda e: str(e) == 'aaa').execute(runtime_error='aaa')
+    end_event = observer.last_event
+    assert end_event.status == 'PASS'
+    assert isinstance(end_event.exception, RuntimeError)
+    assert end_event.result.get() is None
+
+
+def test_step_never_failing(ctx):
+    observer = ctx.observer(EventType.STEP_ENDED)
+
+    with pytest.raises(RuntimeError) as exc_info:
+        ctx.step(EchoStep).do_not_fail.execute(runtime_error='Error')
+
+    end_event = observer.last_event
+    assert end_event.status == 'PASS'
+    assert end_event.exception == exc_info.value
+    assert end_event.result.get() is None

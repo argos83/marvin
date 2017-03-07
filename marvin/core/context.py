@@ -1,3 +1,4 @@
+from marvin.exceptions import ContextSkippedException
 from marvin.report import Publisher
 
 
@@ -14,3 +15,6 @@ class Context(object):
     @property
     def publisher(self):
         return self._publisher
+
+    def skip(self, reason=None):
+        raise ContextSkippedException(self, reason=reason)

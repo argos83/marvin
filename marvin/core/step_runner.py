@@ -1,19 +1,21 @@
+import inspect
 
-from marvin.report.events import StepStartedEvent, StepEndedEvent
-
-
-STATUS_PASS = "PASS"
-STATUS_FAIL = "FAIL"
+from marvin.core.status import Status
+from marvin.exceptions import ContextSkippedException, ExpectedExceptionNotRaised
+from marvin.report.events import StepStartedEvent, StepEndedEvent, StepSkippedEvent
 
 
 class StepRunner(object):
-
+    """
+    Internal Marvin Step executor. Implement the logic of a step execution flow, signals, events, etc
+    """
     def __init__(self, step, args, kwargs):
         self._step = step
         self._args = list(args)  # make args mutable
         self._kwargs = kwargs
 
     def execute(self):
+        """Executes the step triggering the associated events"""
         start_event = StepStartedEvent(self._step, self._args, self._kwargs)
         self._step.publisher.notify(start_event)
 
@@ -27,35 +29,37 @@ class StepRunner(object):
         return result.get()
 
     def _do_run(self):
+        result = None
         try:
-            result = Result(self._step.run(*self._args, **self._kwargs))
-            exception = None
+            result = self._step.run(*self._args, **self._kwargs)
             status, raise_exception = self._when_no_exception()
+            exception = raise_exception
+        except ContextSkippedException as e:
+            status = Status.SKIP
+            exception = raise_exception = e
+            self._step.publisher.notify(StepSkippedEvent(self._step, e))
         except Exception as e:
             exception = e
-            result = Result(e)
             status, raise_exception = self._when_exception(e)
-        return status, result, exception, raise_exception
+        return status, Result(result), exception, raise_exception
 
     def _when_no_exception(self):
-        ee = self._step.expected_exceptions
-        if not ee:
-            return STATUS_PASS, None
+        if not self._step.expected_exceptions:
+            return Status.PASS, None
 
-        expectation = ee[0] if len(ee) == 1 else ee
-        to_raise = RuntimeError("No exception was raised, but the expectation was: %s" % expectation)
-        return STATUS_FAIL, to_raise
+        to_raise = ExpectedExceptionNotRaised(self._step.expected_exceptions)
+        return Status.FAIL, to_raise
 
     def _when_exception(self, exception):
         was_expected = self._is_exception_expected(exception, self._step.expected_exceptions)
-        status = STATUS_PASS if self._step.shall_pass or was_expected else STATUS_FAIL
+        status = Status.PASS if self._step.shall_pass or was_expected else Status.FAIL
         to_raise = None if self._step.safe_exec or was_expected else exception
         return status, to_raise
 
     def _is_exception_expected(self, exception, expectation):
         if isinstance(expectation, list):
             return any(self._is_exception_expected(exception, expect) for expect in expectation)
-        if issubclass(expectation, BaseException):
+        if inspect.isclass(expectation) and issubclass(expectation, BaseException):
             return isinstance(exception, expectation)
         if callable(expectation):
             return expectation(exception)
@@ -70,7 +74,9 @@ class Result(object):
         self._result = result
 
     def get(self):
+        """Get the step result object"""
         return self._result
 
     def set(self, value):
+        """Change the step result object"""
         self._result = value

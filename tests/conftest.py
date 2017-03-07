@@ -11,5 +11,5 @@ def pytest_configure(config):
 
 @pytest.fixture()
 def ctx():
-    from stubs import DummyContext
+    from tests.stubs import DummyContext
     return DummyContext()

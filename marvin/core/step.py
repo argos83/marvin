@@ -22,6 +22,10 @@ class Step(StepRunningContext, Reportable):
         self._safe_exec = True
         return self
 
+    def expect_exception(self, *specs):
+        self._expected_exceptions.extend(specs)
+        return self
+
     @property
     def expected_exceptions(self):
         return self._expected_exceptions
@@ -33,10 +37,6 @@ class Step(StepRunningContext, Reportable):
     @property
     def safe_exec(self):
         return self._safe_exec
-
-    def expect_exception(self, *specs):
-        self._expected_exceptions.extend(specs)
-        return self
 
     def execute(self, *args, **kwargs):
         return StepRunner(self, args, kwargs).execute()

@@ -21,28 +21,32 @@ class EventType(object):
         STEP_SKIPPED
     ]
 
-class Event(object):
 
+class Event(object):
+    """Abstract root Event class"""
     def __init__(self):
         self._timestamp = int(time.time() * 1000)
 
     @property
     def timestamp(self):
+        """Event timestamp (Unix time with ms granularity)"""
         return self._timestamp
 
 
 class StepEvent(Event):
-
+    """Abstract class for all Step related events"""
     def __init__(self, step):
         super(StepEvent, self).__init__()
         self._step = step
 
     @property
     def step(self):
+        """The step instance associated with this event"""
         return self._step
 
 
 class StepStartedEvent(StepEvent):
+    """Triggered when a Step is about to be executed"""
     event_type = EventType.STEP_STARTED
 
     def __init__(self, step, args, kwargs):
@@ -52,14 +56,17 @@ class StepStartedEvent(StepEvent):
 
     @property
     def args(self):
+        """The arguments being passed to the step's run method"""
         return self._args
 
     @property
     def kwargs(self):
+        """The keyword arguments being passed to the step's run method"""
         return self._kwargs
 
 
 class StepEndedEvent(StepEvent):
+    """Triggered when a Step has finished it's execution"""
     event_type = EventType.STEP_ENDED
 
     def __init__(self, step, status, result, start_time, exception=None):
@@ -72,20 +79,41 @@ class StepEndedEvent(StepEvent):
 
     @property
     def status(self):
+        """The step's status"""
         return self._status
 
     @property
     def result(self):
+        """The step's returned result (wrapped in a Result instance)"""
         return self._result
 
     @property
     def start_time(self):
+        """The timestamp when the step started"""
         return self._start_time
 
     @property
     def duration(self):
+        """The step execution time in ms"""
         return self._duration
 
     @property
     def exception(self):
+        """The exception raised by this step (if any)"""
+        return self._exception
+
+
+class StepSkippedEvent(StepEvent):
+    """Triggered when a step is being skipped"""
+    event_type = EventType.STEP_SKIPPED
+
+    def __init__(self, step, exception):
+        super(StepSkippedEvent, self).__init__(step)
+        self._exception = exception
+
+    @property
+    def exception(self):
+        """
+        The corresponding ContextSkippedException containing the reason and stacktrace
+        """
         return self._exception
