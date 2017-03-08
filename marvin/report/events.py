@@ -69,7 +69,7 @@ class StepEndedEvent(StepEvent):
     """Triggered when a Step has finished it's execution"""
     event_type = EventType.STEP_ENDED
 
-    def __init__(self, step, status, result, start_time, exception=None):
+    def __init__(self, step, status, result, start_time, exception=(None, None, None)):
         super(StepEndedEvent, self).__init__(step)
         self._status = status
         self._result = result
@@ -99,7 +99,10 @@ class StepEndedEvent(StepEvent):
 
     @property
     def exception(self):
-        """The exception raised by this step (if any)"""
+        """
+        The exception raised by this step (if any) as a 3-tuple (like sys.exc_info)
+        composed of (Exception type, Exception isntance, Traceback instance)
+        """
         return self._exception
 
 
@@ -115,5 +118,6 @@ class StepSkippedEvent(StepEvent):
     def exception(self):
         """
         The corresponding ContextSkippedException containing the reason and stacktrace
+        as a 3-tuple (like sys.exc_info) composed of (Exception type, Exception isntance, Traceback instance)
         """
         return self._exception

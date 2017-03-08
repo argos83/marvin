@@ -65,7 +65,7 @@ def test_step_events(ctx):
     assert end_event.duration == end_event.timestamp - start_event.timestamp
     assert end_event.result.get() == 8
     assert end_event.status == 'PASS'
-    assert end_event.exception is None
+    assert end_event.exception == (None, None, None)
 
 
 def test_plugins_can_change_step_args_and_results(ctx):
@@ -103,9 +103,9 @@ def test_step_can_be_skipped(ctx):
 
     skip_event, end_event = observer.events
 
-    assert skip_event.exception == exc_info.value
-    assert skip_event.exception.reason == 'Kaput'
-    assert skip_event.exception.context == skip_event.step
+    assert skip_event.exception[1] == exc_info.value
+    assert skip_event.exception[1].reason == 'Kaput'
+    assert skip_event.exception[1].context == skip_event.step
     assert end_event.status == 'SKIP'
     assert end_event.exception == skip_event.exception
 
@@ -118,7 +118,7 @@ def test_step_fails_when_exception_is_raised(ctx):
 
     end_event = observer.last_event
     assert end_event.status == 'FAIL'
-    assert end_event.exception == exc_info.value
+    assert end_event.exception[1] == exc_info.value
     assert end_event.result.get() is None
 
 
@@ -128,7 +128,7 @@ def test_step_not_re_raising_exceptions(ctx):
     ctx.step(EchoStep).catch_exceptions.execute(action=lambda _: 5 / 0)
     end_event = observer.last_event
     assert end_event.status == 'FAIL'
-    assert isinstance(end_event.exception, ZeroDivisionError)
+    assert end_event.exception[0] == ZeroDivisionError
     assert end_event.result.get() is None
 
 
@@ -139,7 +139,7 @@ def test_step_expecting_exception_class(ctx):
 
     end_event = observer.last_event
     assert end_event.status == 'PASS'
-    assert isinstance(end_event.exception, ZeroDivisionError)
+    assert end_event.exception[0] == ZeroDivisionError
     assert end_event.result.get() is None
 
 
@@ -149,7 +149,7 @@ def test_step_expecting_exception_callable(ctx):
     ctx.step(EchoStep).expect_exception(lambda e: str(e).startswith('Oops')).execute(runtime_error='Oops error')
     end_event = observer.last_event
     assert end_event.status == 'PASS'
-    assert isinstance(end_event.exception, RuntimeError)
+    assert end_event.exception[0] == RuntimeError
     assert end_event.result.get() is None
 
 
@@ -161,7 +161,7 @@ def test_step_expecting_different_exception(ctx):
     end_event = observer.last_event
 
     assert end_event.status == 'FAIL'
-    assert end_event.exception == exc_info.value
+    assert end_event.exception[1] == exc_info.value
     assert end_event.result.get() is None
 
 
@@ -173,8 +173,8 @@ def test_step_expects_exception_but_nothing_raised(ctx):
 
     end_event = observer.last_event
     assert end_event.status == 'FAIL'
-    assert end_event.exception == exc_info.value
-    assert str(end_event.exception) == "No exception was raised, but the expectation was: %s" % ZeroDivisionError
+    assert end_event.exception[1] == exc_info.value
+    assert str(end_event.exception[1]) == "No exception was raised, but the expectation was: %s" % ZeroDivisionError
     assert end_event.result.get() == 5
 
 
@@ -188,7 +188,7 @@ def test_step_matching_one_of_many_exception_expectations(ctx):
                                         lambda e: str(e) == 'aaa').execute(runtime_error='aaa')
     end_event = observer.last_event
     assert end_event.status == 'PASS'
-    assert isinstance(end_event.exception, RuntimeError)
+    assert end_event.exception[0] == RuntimeError
     assert end_event.result.get() is None
 
 
@@ -200,5 +200,82 @@ def test_step_never_failing(ctx):
 
     end_event = observer.last_event
     assert end_event.status == 'PASS'
-    assert end_event.exception == exc_info.value
+    assert end_event.exception[1] == exc_info.value
     assert end_event.result.get() is None
+
+
+def test_step_with_context_manager(ctx):
+    observer = ctx.observer(EventType.STEP_ENDED)
+
+    with ctx.step(DummyStep).do(2, 4, operation=lambda x, y: x * y) as (step, result):
+        step.tag('dynamic', 'tagging')
+
+    end_event = observer.last_event
+
+    assert result == 8
+    assert end_event.result.get() == result
+    assert all(tag in end_event.step.tags for tag in ['dynamic', 'tagging'])
+
+
+def test_step_with_context_returning_tuple(ctx):
+    class SubstractBothWaysStep(Step):
+        def run(self, operand1, operand2):
+            return operand1 - operand2, operand2 - operand1
+
+    results = []
+    with ctx.step(SubstractBothWaysStep).do(6, 4) as (step, (result1, result2)):
+        results.append(result1)
+        results.append(result2)
+
+    assert results == [2, -2]
+
+
+def test_step_context_not_called_if_error(ctx):
+    """Step context not called if errors are raised """
+    observer = ctx.observer(EventType.STEP_ENDED)
+    invoked = False
+
+    with pytest.raises(ZeroDivisionError) as exc_info:
+        with ctx.step(DummyStep).do(5, 0, operation=lambda x, y: x / y):
+            invoked = True
+
+    assert not invoked
+
+    end_event = observer.last_event
+    assert end_event.status == 'FAIL'
+    assert end_event.exception[1] == exc_info.value
+
+
+def test_step_context_when_catching_exceptions(ctx):
+    """
+    Step context is called when errors occur if catch_exceptions is enabled
+    but receives exc_info instead of result
+    """
+    invoked = False
+    observer = ctx.observer(EventType.STEP_ENDED)
+
+    with ctx.step(DummyStep).catch_exceptions.do(5, 0, operation=lambda x, y: x / y) as (step, exc_info):
+        invoked = True
+
+    assert invoked
+
+    end_event = observer.last_event
+    assert end_event.status == 'FAIL'
+    assert end_event.exception[0] == ZeroDivisionError
+    assert end_event.exception == exc_info
+
+
+def test_step_context_when_do_not_fail(ctx):
+    """Step context not called when exceptions are raised even if do_not_fail is enabled"""
+    observer = ctx.observer(EventType.STEP_ENDED)
+    invoked = False
+
+    with pytest.raises(ZeroDivisionError) as exc_info:
+        with ctx.step(DummyStep).do_not_fail.do(5, 0, operation=lambda x, y: x / y):
+            invoked = True
+
+    assert not invoked
+
+    end_event = observer.last_event
+    assert end_event.status == 'PASS'
+    assert end_event.exception[1] == exc_info.value
