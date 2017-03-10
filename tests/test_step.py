@@ -279,3 +279,40 @@ def test_step_context_when_do_not_fail(ctx):
     end_event = observer.last_event
     assert end_event.status == 'PASS'
     assert end_event.exception[1] == exc_info.value
+
+
+def test_step_context_failing(ctx):
+    observer = ctx.observer(EventType.STEP_ENDED)
+
+    with pytest.raises(RuntimeError) as exc_info:
+        with ctx.step(DummyStep).do(6, 4, operation=lambda x, y: x + y) as (_step, result):
+            if result % 2 == 0:
+                raise RuntimeError('blah')
+
+    end_event = observer.last_event
+    assert end_event.status == 'FAIL'
+    assert end_event.exception[1] == exc_info.value
+
+
+def test_step_context_failing_when_do_not_fail(ctx):
+    observer = ctx.observer(EventType.STEP_ENDED)
+
+    with pytest.raises(RuntimeError) as exc_info:
+        with ctx.step(DummyStep).do_not_fail.do(6, 4, operation=lambda x, y: x + y) as (_step, result):
+            if result % 2 == 0:
+                raise RuntimeError('blah')
+
+    end_event = observer.last_event
+    assert end_event.status == 'PASS'
+    assert end_event.exception[1] == exc_info.value
+
+
+def test_step_exception_expectation_applies_for_context(ctx):
+    observer = ctx.observer(EventType.STEP_ENDED)
+
+    with ctx.step(EchoStep).expect_exception(ZeroDivisionError).do(action=lambda _: 5 / 1) as (_step, result):
+        result / 0
+
+    end_event = observer.last_event
+    assert end_event.status == 'PASS'
+    assert end_event.exception[0] == ZeroDivisionError

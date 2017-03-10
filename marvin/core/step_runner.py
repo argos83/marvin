@@ -1,4 +1,4 @@
-import collections
+
 import inspect
 import sys
 
@@ -7,12 +7,12 @@ from marvin.exceptions import ContextSkippedException, ExpectedExceptionNotRaise
 from marvin.report.events import StepStartedEvent, StepEndedEvent, StepSkippedEvent
 from marvin.util import compat
 
+NO_EXCEPTION = (None, None, None)
+
 class StepRunner(object):
     """
     Internal Marvin Step executor. Implement the logic of a step execution flow, signals, events, etc
     """
-
-    Execution = collections.namedtuple('Execution', 'status result exception raise_exception')
 
     def __init__(self, step, args, kwargs):
         self._step = step
@@ -20,71 +20,101 @@ class StepRunner(object):
         self._kwargs = kwargs
         self._execution = None
         self._start_time = None
+        self._expect_exception = False
+        self._result = Result(None)
+        self._step_exception = NO_EXCEPTION
+        self._context_exception = NO_EXCEPTION
 
+    @property
     def result(self):
-        return self._execution.result.get()
+        return self._result.get()
 
     def __enter__(self):
         start_event = StepStartedEvent(self._step, self._args, self._kwargs)
         self._start_time = start_event.timestamp
         self._step.publisher.notify(start_event)
 
-        self._execution = self._do_run()
+        result, self._step_exception = self._do_run()
+        self._result.set(result)
 
-        # Decide whether we should yield the result or fail
-        if self._execution.raise_exception[1]:
-            self.__exit__(None, None, None)
+        is_exception = self._step_exception != NO_EXCEPTION
+        expected = is_exception and self._is_exception_expected(self._step_exception, self._step.expected_exceptions)
 
-        elif self._step.safe_exec and self._execution.exception[1]:
+        # Decide whether we should yield the result or fail right away
+        if is_exception and self._step.safe_exec:
             # TODO: This is more a language constraint than a feature.
             # Alternatively we could make `catch_exceptions` and `do` to be incompatible.
             # Or find a way to inject an exception to be raised immediately inside the context
-            return self._step, self._execution.exception
+            return self._step, self._step_exception
 
-        return self._step, self._execution.result.get()
+        elif is_exception and not expected:
+            self.__exit__(*NO_EXCEPTION)
+
+        return self._step, self.result
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self._context_exception = (exc_type, exc_val, exc_tb)
+
+        if self._step_exception != NO_EXCEPTION:
+            exception = self._step_exception
+            status, to_raise = self._when_exception(self._step_exception)
+        elif self._context_exception != NO_EXCEPTION:
+            exception = self._context_exception
+            status, to_raise = self._when_exception(self._context_exception)
+        else:
+            status, to_raise = self._when_no_exception()
+            exception = to_raise
+
+        skip_exception = None
+        if self._step_exception[0] == ContextSkippedException:
+            skip_exception = self._step_exception
+
+        elif self._context_exception == ContextSkippedException:
+            skip_exception = self._context_exception
+
+        if skip_exception:
+            status = Status.SKIP
+            skip_event = StepSkippedEvent(self._step, skip_exception)
+            self._step.publisher.notify(skip_event)
+
         end_event = StepEndedEvent(self._step,
-                                   self._execution.status,
-                                   self._execution.result,
+                                   status,
+                                   self._result,
                                    self._start_time,
-                                   self._execution.exception)
+                                   exception)
 
         self._step.publisher.notify(end_event)
 
-        if self._execution.raise_exception[1]:
-            raise compat.raise_exc_info(*self._execution.raise_exception)
-
+        if to_raise[1]:
+            raise compat.raise_exc_info(*to_raise)
 
     def _do_run(self):
         result = None
+        exception = NO_EXCEPTION
         try:
             result = self._step.run(*self._args, **self._kwargs)
-            status, raise_exception = self._when_no_exception()
-            exception = raise_exception
-        except ContextSkippedException:
-            status = Status.SKIP
-            exception = raise_exception = sys.exc_info()
-            self._step.publisher.notify(StepSkippedEvent(self._step, exception))
         except Exception:
             exception = sys.exc_info()
-            status, raise_exception = self._when_exception(exception)
-        return self.Execution(status=status,
-                              result=Result(result),
-                              exception=exception,
-                              raise_exception=raise_exception)
+
+        return result, exception
 
     def _when_no_exception(self):
         if not self._step.expected_exceptions:
-            return Status.PASS, (None, None, None)
+            return Status.PASS, NO_EXCEPTION
 
         to_raise = (ExpectedExceptionNotRaised, ExpectedExceptionNotRaised(self._step.expected_exceptions), None)
         return Status.FAIL, to_raise
 
     def _when_exception(self, exception):
         was_expected = self._is_exception_expected(exception, self._step.expected_exceptions)
-        status = Status.PASS if self._step.shall_pass or was_expected else Status.FAIL
-        to_raise = (None, None, None) if self._step.safe_exec or was_expected else exception
+        if self._step.shall_pass or was_expected:
+            status = Status.PASS
+        else:
+            status = Status.FAIL
+        if self._step.safe_exec or was_expected:
+            to_raise = NO_EXCEPTION
+        else:
+            to_raise = exception
         return status, to_raise
 
     def _is_exception_expected(self, exception, expectation):

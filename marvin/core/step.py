@@ -53,7 +53,7 @@ class Step(StepRunningContext, Reportable):
         with runner:
             pass
 
-        return runner.result()
+        return runner.result
 
     def do(self, *args, **kwargs):
         return StepRunner(self, args, kwargs)
