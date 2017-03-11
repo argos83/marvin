@@ -6,6 +6,7 @@ from datetime import datetime
 from marvin import Publisher
 from marvin import Events
 
+
 class ELKReporter(object):
 
     def __init__(self, base_url, index, schema_type="marvin"):
@@ -37,7 +38,6 @@ class ELKReporter(object):
 
     def on_step_ended(self, _event, data):
         step = data['step']
-        duration = data['timestamp'] - data['start_time']
         step_info = {
             "name": step.name,
             "description": step.description,
@@ -54,7 +54,7 @@ class ELKReporter(object):
     def _publish(self):
         url = self._base_url + self._index + '/' + self._type
         data = json.dumps({"tests": self.tests, "timestamp": self._ms_to_iso(time.time() * 1000.0)})
-        
+
         req = urllib2.Request(url, data, {'Content-Type': 'application/json'})
         urllib2.urlopen(req)
 

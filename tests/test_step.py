@@ -316,3 +316,33 @@ def test_step_exception_expectation_applies_for_context(ctx):
     end_event = observer.last_event
     assert end_event.status == 'PASS'
     assert end_event.exception[0] == ZeroDivisionError
+
+
+def test_step_context_can_trigger_skip(ctx):
+    observer = ctx.observer(EventType.STEP_SKIPPED, EventType.STEP_ENDED)
+
+    with pytest.raises(ContextSkippedException) as exc_info:
+        with ctx.step(DummyStep).do(6, 4, operation=lambda x, y: x + y) as (step, _result):
+            step.skip('skipping in context')
+
+    skip_event, end_event = observer.events
+
+    assert skip_event.exception[1] == exc_info.value
+    assert skip_event.exception[1].reason == 'skipping in context'
+    assert skip_event.exception[1].context == skip_event.step
+    assert end_event.status == 'SKIP'
+    assert end_event.exception == skip_event.exception
+
+
+def test_step_run_method_not_implemented(ctx):
+    class WipStep(Step):
+        pass
+
+    observer = ctx.observer(EventType.STEP_ENDED)
+    with pytest.raises(NotImplementedError) as exc_info:
+        ctx.step(WipStep).execute(1, 2)
+
+    end_event = observer.last_event
+
+    assert end_event.exception[1] == exc_info.value
+    assert end_event.status == 'FAIL'

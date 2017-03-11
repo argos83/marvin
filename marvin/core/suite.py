@@ -14,8 +14,8 @@ class Suite(Context, Reportable):
     def execute(self):
         start = int(time.time() * 1000)
         data = {
-        "suite": self,
-        "timestamp": start
+            "suite": self,
+            "timestamp": start
         }
 
         Publisher.notify(Events.SUITE_STARTED, data)

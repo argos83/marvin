@@ -9,6 +9,7 @@ from marvin.util import compat
 
 NO_EXCEPTION = (None, None, None)
 
+
 class StepRunner(object):
     """
     Internal Marvin Step executor. Implement the logic of a step execution flow, signals, events, etc
@@ -20,7 +21,6 @@ class StepRunner(object):
         self._kwargs = kwargs
         self._execution = None
         self._start_time = None
-        self._expect_exception = False
         self._result = Result(None)
         self._step_exception = NO_EXCEPTION
         self._context_exception = NO_EXCEPTION
@@ -69,7 +69,7 @@ class StepRunner(object):
         if self._step_exception[0] == ContextSkippedException:
             skip_exception = self._step_exception
 
-        elif self._context_exception == ContextSkippedException:
+        elif self._context_exception[0] == ContextSkippedException:
             skip_exception = self._context_exception
 
         if skip_exception:
@@ -87,6 +87,8 @@ class StepRunner(object):
 
         if to_raise[1]:
             raise compat.raise_exc_info(*to_raise)
+
+        return True
 
     def _do_run(self):
         result = None

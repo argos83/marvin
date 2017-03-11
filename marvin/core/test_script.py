@@ -40,12 +40,11 @@ class TestScript(StepRunningContext, Reportable):
     def tear_down(self, _data):
         pass
 
-
     def execute(self):
         start = int(time.time() * 1000)
         data = {
-        "test_script": self,
-        "timestamp": start
+            "test_script": self,
+            "timestamp": start
         }
 
         Publisher.notify(EventType.TEST_STARTED, data)
