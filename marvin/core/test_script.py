@@ -1,9 +1,6 @@
-import time
-import sys
-
-from marvin.core.step_running_context import StepRunningContext
 from marvin.core.reportable import Reportable
-from marvin.report import Publisher, EventType
+from marvin.core.step_running_context import StepRunningContext
+from marvin.core.test_runner import TestRunner
 
 
 class TestScript(StepRunningContext, Reportable):
@@ -26,68 +23,36 @@ class TestScript(StepRunningContext, Reportable):
         * The 'tear_down' block.
     """
 
-    def __init__(self, data_provider, parent_context):
+    def __init__(self, parent_context):
         StepRunningContext.__init__(self, parent_context=parent_context)
         Reportable.__init__(self)
-        self._data_provider = data_provider
+        self._failed_steps = 0
 
     def setup(self, _data):
+        """
+        Setup phase of a TestScript, executed only once, before all the iterations
+        Can be redefined by subclasses implementing actual tests
+        """
         pass
 
     def run(self, _data):
-        raise NotImplementedError("Method run must be redefined")
+        """
+        Main execution phase, invoked once per each iteration.
+        Must be redefined by subclasses
+        """
+        raise NotImplementedError("Method run must be implemented in test script '%s'" % self.name)
 
     def tear_down(self, _data):
+        """
+        Tear down phase of a TestScript, executed only once, after all the iterations (even if there're failures)
+        Can be redefined by subclasses implementingactual tests
+        """
         pass
 
-    def execute(self):
-        start = int(time.time() * 1000)
-        data = {
-            "test_script": self,
-            "timestamp": start
-        }
-
-        Publisher.notify(EventType.TEST_STARTED, data)
-
-        # TODO: also generate events for each execution block: setup, iterations, tear_down
-
-        status, exceptions = self._execute()
-
-        data = {"test_script": self,
-                "status": status,
-                "start_time": start,
-                "exception": exceptions,
-                "timestamp": int(time.time() * 1000)}
-
-        Publisher.notify(EventType.TEST_ENDED, data)
-
-        if status == "FAILED" and exceptions:
-            raise exceptions[0][0]
-
-    # private methods
-
-    def _execute(self):
-        exc_info = []
-        status = "PASSED"
-        try:
-            self.setup(self._data_provider.setup_data())
-            for it_data in self._data_provider.iteration_data():
-                self._do_run(it_data, exc_info)
-
-        except:
-            exc_info.append(sys.exc_info())
-        finally:
-            try:
-                self.tear_down(self._data_provider.tear_down_data())
-            except:
-                exc_info.append(sys.exc_info())
-
-        if exc_info:
-            status = "FAILED"
-        return status, exc_info
-
-    def _do_run(self, data, exc_info):
-        try:
-            self.run(data)
-        except:
-            exc_info.append(sys.exc_info())
+    def execute(self, data_provider=None):
+        """
+        Executes this TestScript with the given data provider
+        """
+        # TODO: TestScript instances should probably not be allowed to execute more than once
+        # Either make them stateless (and allow re-execution) or add controls to fail if executed more than once
+        TestRunner(self, data_provider).execute()

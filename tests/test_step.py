@@ -1,7 +1,7 @@
 import pytest
 
 from marvin import Step
-from marvin.exceptions import ContextSkippedException, ExpectedExceptionNotRaised
+from marvin.exceptions import ContextSkippedException, ExpectedExceptionNotRaised, StepsFailedInContext
 from marvin.report import EventType
 from tests.stubs import DummyStep, EchoStep
 
@@ -30,25 +30,13 @@ def test_steps_are_reportable(ctx):
     assert step.tags == {'tags', 'and', 'some', 'labels'}
 
 
-def test_steps_can_run_other_steps(ctx):
-    """Steps are themselves step running contexts"""
-
-    class MacroStep(Step):
-
-        def run(self, add_me):
-            intermediate_result = self.step(DummyStep).execute(2, 4, operation=lambda x, y: x * y)
-            return intermediate_result + add_me
-
-    result = ctx.step(MacroStep).execute(3)
-
-    assert result == 11
-
-
 def test_step_events(ctx):
     """Executing a step results """
     observer = ctx.observer(EventType.STEP_STARTED, EventType.STEP_ENDED)
 
-    multiply = lambda x, y: x * y
+    def multiply(x, y):
+        return x * y
+
     ctx.step(DummyStep).execute(2, 4, operation=multiply)
 
     assert len(observer.events) == 2
@@ -125,7 +113,7 @@ def test_step_fails_when_exception_is_raised(ctx):
 def test_step_not_re_raising_exceptions(ctx):
     observer = ctx.observer(EventType.STEP_ENDED)
 
-    ctx.step(EchoStep).catch_exceptions.execute(action=lambda _: 5 / 0)
+    ctx.step(EchoStep).safely.execute(action=lambda _: 5 / 0)
     end_event = observer.last_event
     assert end_event.status == 'FAIL'
     assert end_event.exception[0] == ZeroDivisionError
@@ -246,15 +234,15 @@ def test_step_context_not_called_if_error(ctx):
     assert end_event.exception[1] == exc_info.value
 
 
-def test_step_context_when_catching_exceptions(ctx):
+def test_step_context_with_safe_exec(ctx):
     """
-    Step context is called when errors occur if catch_exceptions is enabled
+    Step context is called when errors occur if safely is enabled
     but receives exc_info instead of result
     """
     invoked = False
     observer = ctx.observer(EventType.STEP_ENDED)
 
-    with ctx.step(DummyStep).catch_exceptions.do(5, 0, operation=lambda x, y: x / y) as (step, exc_info):
+    with ctx.step(DummyStep).safely.do(5, 0, operation=lambda x, y: x / y) as (step, exc_info):
         invoked = True
 
     assert invoked
@@ -318,6 +306,20 @@ def test_step_exception_expectation_applies_for_context(ctx):
     assert end_event.exception[0] == ZeroDivisionError
 
 
+def test_step_do_not_fail_and_expected_exception(ctx):
+    # This is a contradictory case, not sure what should the proper outcome be
+    # a step we don't want to fail (do_not_fail) but which at the same time expects an exception.
+    # What makes more sense to me is that the step passes but still throws an ExpectedExceptionNotRaised
+    observer = ctx.observer(EventType.STEP_ENDED)
+
+    with pytest.raises(ExpectedExceptionNotRaised):
+        ctx.step(EchoStep).do_not_fail.expect_exception(ZeroDivisionError).execute(action=lambda _: 5 / 1)
+
+    end_event = observer.last_event
+    assert end_event.status == 'PASS'
+    assert end_event.exception[0] == ExpectedExceptionNotRaised
+
+
 def test_step_context_can_trigger_skip(ctx):
     observer = ctx.observer(EventType.STEP_SKIPPED, EventType.STEP_ENDED)
 
@@ -346,3 +348,67 @@ def test_step_run_method_not_implemented(ctx):
 
     assert end_event.exception[1] == exc_info.value
     assert end_event.status == 'FAIL'
+
+
+# -- Nested Step Tests --
+
+
+def test_steps_can_run_other_steps(ctx):
+    """Steps are themselves step running contexts"""
+
+    class MacroStep(Step):
+
+        def run(self, add_me):
+            intermediate_result = self.step(DummyStep).execute(2, 4, operation=lambda x, y: x * y)
+            return intermediate_result + add_me
+
+    result = ctx.step(MacroStep).execute(3)
+
+    assert result == 11
+
+
+def test_step_fails_if_sub_step_fails(ctx):
+    """A step should fail if sub steps have failed (even when no exceptions are raised)"""
+    class MacroStep(Step):
+        def run(self):
+            self.step(DummyStep).safely.execute(2, 0, operation=lambda x, y: x / y)
+            self.step(DummyStep).safely.execute(4, 0, operation=lambda x, y: x / y)
+
+    observer = ctx.observer(EventType.STEP_ENDED)
+
+    ctx.step(MacroStep).safely.execute()
+
+    end_event = observer.last_event
+    assert end_event.status == 'FAIL'
+    assert end_event.exception[0] == StepsFailedInContext
+    assert str(end_event.exception[1]) == "2 steps have failed"
+
+
+def test_do_not_fail_step_regardless_sub_steps(ctx):
+    """A step called with do_not_fail should pass regardless failing sub-steps"""
+    class MacroStep(Step):
+        def run(self):
+            self.step(DummyStep).safely.execute(2, 0, operation=lambda x, y: x / y)
+
+    observer = ctx.observer(EventType.STEP_ENDED)
+
+    ctx.step(MacroStep).safely.do_not_fail.execute()
+
+    end_event = observer.last_event
+    assert end_event.status == 'PASS'
+    assert end_event.exception[0] == StepsFailedInContext
+    assert str(end_event.exception[1]) == "1 step has failed"
+
+
+def test_sub_step_with_do_not_fail(ctx):
+    """A step run with do_not_fail should pass even if sub steps have failed (with or without raised exceptions)"""
+    class MacroStep(Step):
+        def run(self):
+            self.step(DummyStep).do_not_fail.safely.execute(2, 0, operation=lambda x, y: x / y)
+
+    observer = ctx.observer(EventType.STEP_ENDED)
+
+    ctx.step(MacroStep).execute()
+
+    end_event = observer.last_event
+    assert end_event.status == 'PASS'

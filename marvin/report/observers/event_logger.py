@@ -18,8 +18,8 @@ class EventLogger(object):
         self._level += 1
         step = data['step']
 
-        print "----------------------------------------------------------------"
-        print "%s%s: %s (%s)" % (self._indent * self._level, step.name, step.description, ", ".join(step.tags))
+        print("----------------------------------------------------------------")
+        print("%s%s: %s (%s)" % (self._indent * self._level, step.name, step.description, ", ".join(step.tags)))
 
     def on_step_ended(self, _event, data):
         step = data['step']
@@ -33,7 +33,7 @@ class EventLogger(object):
         elif status == 'SKIPPED':
             status = Fore.BLUE + Back.WHITE + status + Back.RESET + Fore.RESET
 
-        print "%s[%s] %s (%d ms)" % (self._indent * self._level, status, step.name, duration)
+        print("%s[%s] %s (%d ms)" % (self._indent * self._level, status, step.name, duration))
         self._level -= 1
 
     def on_test_started(self, _event, data):
@@ -41,9 +41,9 @@ class EventLogger(object):
 
         test_header = Fore.CYAN + 'TEST' + Fore.RESET
 
-        print "[%s] %s - %s" % (
+        print("[%s] %s - %s" % (
             test_header, test_script.name, test_script.description
-        )
+        ))
 
     def on_test_ended(self, _event, data):
         test_script = data['test_script']
@@ -56,5 +56,5 @@ class EventLogger(object):
         elif status == 'FAILED':
             status = Fore.RED + status + Fore.RESET
 
-        print "----------------------------------------------------------------"
-        print "[%s] %s - %s" % (test_header, test_script.name, status)
+        print("----------------------------------------------------------------")
+        print("[%s] %s - %s" % (test_header, test_script.name, status))

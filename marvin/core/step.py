@@ -17,13 +17,13 @@ class Step(StepRunningContext, Reportable):
         """
         Flag this step as 'optional' and set the status to PASS even if it fails
         Notice that the step may still raise exceptions that you might want to catch
-        or silently ignore them via `catch_exceptions`.
+        or silently ignore them via `safely`.
         """
         self._shall_pass = True
         return self
 
     @property
-    def catch_exceptions(self):
+    def safely(self):
         """
         Don't propagate exceptions raised by this step
         (the status will still be set to FAIL unless `do_not_fail` is used.
@@ -78,7 +78,7 @@ class Step(StepRunningContext, Reportable):
     def safe_exec(self):
         """
         INTERNAL USE
-        :return: True if `catch_exceptions` was set, False otherwise
+        :return: True if `safely` was set, False otherwise
         """
         return self._safe_exec
 

@@ -23,3 +23,16 @@ class ExpectedExceptionNotRaised(MarvinException):
         expecting = expectations[0] if len(expectations) == 1 else expectations
         message = "No exception was raised, but the expectation was: %s" % expecting
         super(ExpectedExceptionNotRaised, self).__init__(message)
+
+
+class StepsFailedInContext(MarvinException):
+    """
+    One or more steps have failed in this context
+    This is not raised but used as a reason for parent context failure
+    """
+    def __init__(self, failed_steps):
+        if failed_steps == 1:
+            msg = "1 step has failed"
+        else:
+            msg = "{} steps have failed".format(failed_steps)
+        super(StepsFailedInContext, self).__init__(msg)

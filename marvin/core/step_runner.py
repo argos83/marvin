@@ -3,7 +3,7 @@ import inspect
 import sys
 
 from marvin.core.status import Status
-from marvin.exceptions import ContextSkippedException, ExpectedExceptionNotRaised
+from marvin.exceptions import ContextSkippedException, ExpectedExceptionNotRaised, StepsFailedInContext
 from marvin.report.events import StepStartedEvent, StepEndedEvent, StepSkippedEvent
 from marvin.util import compat
 
@@ -43,7 +43,7 @@ class StepRunner(object):
         # Decide whether we should yield the result or fail right away
         if is_exception and self._step.safe_exec:
             # TODO: This is more a language constraint than a feature.
-            # Alternatively we could make `catch_exceptions` and `do` to be incompatible.
+            # Alternatively we could make `safely` and `do` to be incompatible.
             # Or find a way to inject an exception to be raised immediately inside the context
             return self._step, self._step_exception
 
@@ -54,6 +54,7 @@ class StepRunner(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._context_exception = (exc_type, exc_val, exc_tb)
+        sub_context_failures = self._any_sub_steps_failed()
 
         if self._step_exception != NO_EXCEPTION:
             exception = self._step_exception
@@ -61,6 +62,9 @@ class StepRunner(object):
         elif self._context_exception != NO_EXCEPTION:
             exception = self._context_exception
             status, to_raise = self._when_exception(self._context_exception)
+        elif sub_context_failures != NO_EXCEPTION:
+            exception = sub_context_failures
+            status, to_raise = self._when_exception(sub_context_failures)
         else:
             status, to_raise = self._when_no_exception()
             exception = to_raise
@@ -77,6 +81,9 @@ class StepRunner(object):
             skip_event = StepSkippedEvent(self._step, skip_exception)
             self._step.publisher.notify(skip_event)
 
+        if self._step.shall_pass and status == Status.FAIL:
+            status = Status.PASS
+
         end_event = StepEndedEvent(self._step,
                                    status,
                                    self._result,
@@ -85,7 +92,10 @@ class StepRunner(object):
 
         self._step.publisher.notify(end_event)
 
-        if to_raise[1]:
+        # Notify the result to the parent context
+        self._step.ctx.sub_context_finished(status)
+
+        if to_raise[1] and not self._step.safe_exec:
             raise compat.raise_exc_info(*to_raise)
 
         return True
@@ -99,6 +109,12 @@ class StepRunner(object):
             exception = sys.exc_info()
 
         return result, exception
+
+    def _any_sub_steps_failed(self):
+        failed_subcontexts = self._step._sub_context_results[Status.FAIL]
+        if failed_subcontexts:
+            return StepsFailedInContext, StepsFailedInContext(failed_subcontexts), None
+        return NO_EXCEPTION
 
     def _when_no_exception(self):
         if not self._step.expected_exceptions:

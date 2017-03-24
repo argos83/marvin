@@ -9,5 +9,5 @@ setup(name='marvin',
       packages=find_packages(exclude=("tests")),
       include_package_data=True,
       install_requires=['colorama'],
-      tests_require=['pytest', 'pytest-cov'],
+      tests_require=['pytest', 'pytest-cov', 'flake8'],
       zip_safe=False)

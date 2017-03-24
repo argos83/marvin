@@ -8,17 +8,22 @@ class EventType(object):
     SUITE_ENDED = 20
     TEST_STARTED = 30
     TEST_ENDED = 40
-    STEP_STARTED = 50
-    STEP_ENDED = 60
-    STEP_SKIPPED = 70
+    TEST_SETUP_STARTED = 50
+    TEST_SETUP_ENDED = 60
+    TEST_ITERATION_STARTED = 70
+    TEST_ITERATION_ENDED = 80
+    TEST_TEARDOWN_STARTED = 90
+    TEST_TEARDOWN_ENDED = 100
+    STEP_STARTED = 110
+    STEP_ENDED = 120
+    STEP_SKIPPED = 130
+
     ALL = [
-        SUITE_STARTED,
-        SUITE_ENDED,
-        TEST_STARTED,
-        TEST_ENDED,
-        STEP_STARTED,
-        STEP_ENDED,
-        STEP_SKIPPED
+        SUITE_STARTED, SUITE_ENDED,
+        TEST_STARTED, TEST_ENDED,
+        TEST_ITERATION_STARTED, TEST_ITERATION_ENDED,
+        TEST_TEARDOWN_STARTED, TEST_TEARDOWN_ENDED,
+        STEP_STARTED, STEP_ENDED, STEP_SKIPPED
     ]
 
 
@@ -31,6 +36,9 @@ class Event(object):
     def timestamp(self):
         """Event timestamp (Unix time with ms granularity)"""
         return self._timestamp
+
+
+# -- STEP related events --
 
 
 class StepEvent(Event):
@@ -101,7 +109,7 @@ class StepEndedEvent(StepEvent):
     def exception(self):
         """
         The exception raised by this step (if any) as a 3-tuple (like sys.exc_info)
-        composed of (Exception type, Exception isntance, Traceback instance)
+        composed of (Exception type, Exception instance, Traceback instance)
         """
         return self._exception
 
@@ -121,3 +129,113 @@ class StepSkippedEvent(StepEvent):
         as a 3-tuple (like sys.exc_info) composed of (Exception type, Exception isntance, Traceback instance)
         """
         return self._exception
+
+
+# -- TEST related events --
+
+
+class TestEvent(Event):
+    """Abstract class for all TestScript related events"""
+
+    def __init__(self, test_script):
+        super(TestEvent, self).__init__()
+        self._test_script = test_script
+
+    @property
+    def test_script(self):
+        return self._test_script
+
+
+class TestStartedEvent(TestEvent):
+    """Triggered when a test is about to start it's execution"""
+    event_type = EventType.TEST_STARTED
+
+    def __init__(self, test_script, data_provider):
+        super(TestStartedEvent, self).__init__(test_script)
+        self._data_provider = data_provider
+
+    @property
+    def data_provider(self):
+        return self._data_provider
+
+
+class TestEndedEvent(TestEvent):
+    """Triggered when a test has finished it's execution"""
+    event_type = EventType.TEST_ENDED
+
+    def __init__(self, test_script, start_time, status, exceptions):
+        super(TestEndedEvent, self).__init__(test_script)
+        self._start_time = start_time
+        self._status = status
+        self._exceptions = exceptions
+
+
+class TestBlockStartedEvent(TestEvent):
+    """Abstract class for test's block started: setup, iteration(s), tear down"""
+
+    def __init__(self, test_script, data):
+        super(TestBlockStartedEvent, self).__init__(test_script)
+        self._data = data
+
+    @property
+    def data(self):
+        return self._data
+
+
+class TestBlockEndedEvent(TestEvent):
+    """Abstract class for test's block ended: setup, iteration(s), tear down"""
+
+    def __init__(self, test_script, start_time, status, exception):
+        super(TestBlockEndedEvent, self).__init__(test_script)
+        self._start_time = start_time
+        self._status = status
+        self._exception = exception
+        self._duration = self.timestamp - start_time
+
+    @property
+    def start_time(self):
+        """The timestamp when the block started"""
+        return self._start_time
+
+    @property
+    def duration(self):
+        """The block execution time in ms"""
+        return self._duration
+
+    @property
+    def exception(self):
+        """
+        The exception raised by this block (if any) as a 3-tuple (like sys.exc_info)
+        composed of (Exception type, Exception instance, Traceback instance)
+        """
+        return self._exception
+
+
+class TestSetupStartedEvent(TestBlockStartedEvent):
+    """Triggered when a test's setup phase is about to start"""
+    event_type = EventType.TEST_SETUP_STARTED
+
+
+class TestSetupEndedEvent(TestBlockEndedEvent):
+    """Triggered when a test's setup phase has concluded"""
+    event_type = EventType.TEST_SETUP_ENDED
+
+
+class TestIterationStartedEvent(TestBlockStartedEvent):
+    """Triggered when a test's iteration is about to start"""
+    event_type = EventType.TEST_ITERATION_STARTED
+
+
+class TestIterationEndedEvent(TestBlockEndedEvent):
+    """Triggered when a test's iteration has concluded"""
+    event_type = EventType.TEST_ITERATION_ENDED
+
+
+class TestTearDownStartedEvent(TestBlockStartedEvent):
+    """Triggered when a test's tear down phase is about to start"""
+    event_type = EventType.TEST_TEARDOWN_STARTED
+
+
+class TestTearDownEndedEvent(TestBlockEndedEvent):
+    """Triggered when a test's tear down phase has concluded"""
+    event_type = EventType.TEST_TEARDOWN_ENDED

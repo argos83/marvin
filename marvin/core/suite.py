@@ -18,7 +18,7 @@ class Suite(Context, Reportable):
             "timestamp": start
         }
 
-        Publisher.notify(Events.SUITE_STARTED, data)
+        Publisher.notify(EventType.SUITE_STARTED, data)
 
         status = self._execute()
 
@@ -28,7 +28,7 @@ class Suite(Context, Reportable):
                 "start_time": start,
                 "timestamp": int(time.time() * 1000)}
 
-        Publisher.notify(Events.SUITE_ENDED, data)
+        Publisher.notify(EventType.SUITE_ENDED, data)
 
     def tests(self):
         """To be redefined by specific Suite implementations. The method must return
