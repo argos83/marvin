@@ -5,9 +5,7 @@ import sys
 from marvin.core.status import Status
 from marvin.exceptions import ContextSkippedException, ExpectedExceptionNotRaised, StepsFailedInContext
 from marvin.report.events import StepStartedEvent, StepEndedEvent, StepSkippedEvent
-from marvin.util import compat
-
-NO_EXCEPTION = (None, None, None)
+from marvin.util import compat, NO_EXCEPTION
 
 
 class StepRunner(object):

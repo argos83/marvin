@@ -1,12 +1,14 @@
 from marvin.core.reportable import Reportable
+from marvin.core.context import Context
 from marvin.core.step_running_context import StepRunningContext
 from marvin.core.step_runner import StepRunner
 
 
-class Step(StepRunningContext, Reportable):
+class Step(Context, StepRunningContext, Reportable):
 
     def __init__(self, parent_context):
-        StepRunningContext.__init__(self, parent_context=parent_context)
+        Context.__init__(self, parent_context=parent_context)
+        StepRunningContext.__init__(self)
         Reportable.__init__(self)
         self._shall_pass = False
         self._safe_exec = False

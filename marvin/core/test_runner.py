@@ -2,8 +2,10 @@ import sys
 
 from marvin.data.data_providers.null_data_provider import NullDataProvider
 from marvin.core.status import Status
-from marvin.report.events import TestStartedEvent, TestEndedEvent, TestIterationStartedEvent
-from marvin.util import compat
+from marvin.exceptions import ContextSkippedException
+from marvin.report.events import TestStartedEvent, TestEndedEvent, TestSetupStartedEvent, TestSetupEndedEvent, \
+    TestIterationStartedEvent, TestIterationEndedEvent, TestTearDownStartedEvent, TestTearDownEndedEvent
+from marvin.util import NO_EXCEPTION
 
 
 class TestRunner(object):
@@ -14,46 +16,64 @@ class TestRunner(object):
     def __init__(self, test_script, data_provider):
         self._test = test_script
         self._data = data_provider or NullDataProvider()
+        self._status = None
+        self._exceptions = []
+        self._skip_iteration = False
+        self._skip_teardown = False
 
     def execute(self):
         test_started = TestStartedEvent(self._test, self._data)
         self._test.publisher.notify(test_started)
 
-        # TODO: also generate events for each execution block: setup, iterations, tear_down
+        self._execute()
 
-        status, exceptions = self._execute()
-
-        test_ended = TestEndedEvent(self, test_started.timestamp, status, exceptions)
-
+        test_ended = TestEndedEvent(self, test_started.timestamp, self._status, self._exceptions)
         self._test.publisher.notify(test_ended)
-
-        if status == Status.FAIL and exceptions:
-            raise compat.raise_exc_info(*exceptions[0])
+        self._test.ctx.sub_context_finished(self._status)
 
     def _execute(self):
-        exc_info = []
+        self._do_block('setup', self._data.setup_data(), TestSetupStartedEvent, TestSetupEndedEvent)
+
+        for it_data in self._data.iteration_data():
+            self._do_block('run', it_data, TestIterationStartedEvent, TestIterationEndedEvent)
+
+        self._do_block('tear_down', self._data.tear_down_data(), TestTearDownStartedEvent, TestTearDownEndedEvent)
+
+    def _do_block(self, block_type, data, started_event_class, ended_event_class):
+        if self._should_skip_block(block_type):
+            return
+
         status = Status.PASS
+        exception = NO_EXCEPTION
+        block_started = started_event_class(self._test, data)
+        self._test.publisher.notify(block_started)
         try:
-            self._test.setup(self._data.setup_data())
-            for it_data in self._data.iteration_data():
-                self._do_run(it_data, exc_info)
-
+            getattr(self._test, block_type)(data)
+        except ContextSkippedException:
+            status = Status.SKIP
+            exception = sys.exc_info()
         except:
-            exc_info.append(sys.exc_info())
-        finally:
-            try:
-                self._test.tear_down(self._data.tear_down_data())
-            except:
-                exc_info.append(sys.exc_info())
-
-        if exc_info:
             status = Status.FAIL
-        return status, exc_info
+            exception = sys.exc_info()
+        finally:
+            self._test.publisher.notify(
+                ended_event_class(self._test, block_started.timestamp, status, exception)
+            )
+            if exception != NO_EXCEPTION:
+                self._exceptions.append(exception)
+            self._report_block_status(block_type, status)
 
-    def _do_run(self, data, exc_info):
-        iteration_started = TestIterationStartedEvent(self._test, data)
-        self._test.publisher.notify(iteration_started)
-        try:
-            self._test.run(data)
-        except:
-            exc_info.append(sys.exc_info())
+    def _report_block_status(self, block_type, status):
+        if block_type == 'setup' and status in [Status.FAIL, Status.SKIP]:
+            self._skip_iteration = True
+        if block_type == 'setup' and status == Status.SKIP:
+            self._skip_teardown = True
+        if block_type == 'setup' or status == Status.FAIL:
+            self._status = status
+
+    def _should_skip_block(self, block_type):
+        if block_type == 'tear_down':
+            return self._skip_teardown
+        if block_type == 'run':
+            return self._skip_iteration
+        return False

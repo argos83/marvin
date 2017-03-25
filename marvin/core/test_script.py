@@ -1,9 +1,10 @@
 from marvin.core.reportable import Reportable
+from marvin.core.context import Context
 from marvin.core.step_running_context import StepRunningContext
 from marvin.core.test_runner import TestRunner
 
 
-class TestScript(StepRunningContext, Reportable):
+class TestScript(Context, StepRunningContext, Reportable):
     """
     Base TestScript class to be extended by specific tests.
     Subclasses must re-implement the 'run' method, and can re-implement (if needed)
@@ -24,7 +25,8 @@ class TestScript(StepRunningContext, Reportable):
     """
 
     def __init__(self, parent_context):
-        StepRunningContext.__init__(self, parent_context=parent_context)
+        Context.__init__(self, parent_context=parent_context)
+        StepRunningContext.__init__(self)
         Reportable.__init__(self)
         self._failed_steps = 0
 
