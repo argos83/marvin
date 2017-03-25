@@ -168,6 +168,30 @@ class TestEndedEvent(TestEvent):
         self._start_time = start_time
         self._status = status
         self._exceptions = exceptions
+        self._duration = self.timestamp - start_time
+
+    @property
+    def start_time(self):
+        """The timestamp when the test started"""
+        return self._start_time
+
+    @property
+    def duration(self):
+        """The test execution time in ms"""
+        return self._duration
+
+    @property
+    def status(self):
+        """The test's status"""
+        return self._status
+
+    @property
+    def exceptions(self):
+        """
+        The exceptions raised during this test. A list of 3-tuple items (like sys.exc_info)
+        composed of (Exception type, Exception instance, Traceback instance)
+        """
+        return self._exceptions
 
 
 class TestBlockStartedEvent(TestEvent):
@@ -201,6 +225,11 @@ class TestBlockEndedEvent(TestEvent):
     def duration(self):
         """The block execution time in ms"""
         return self._duration
+
+    @property
+    def status(self):
+        """The block's status"""
+        return self._status
 
     @property
     def exception(self):
