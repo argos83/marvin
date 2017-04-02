@@ -38,6 +38,195 @@ class Event(object):
         return self._timestamp
 
 
+# -- SUITE related events --
+
+
+class SuiteEvent(Event):
+    """Abstract class for all Suite related events"""
+
+    def __init__(self, suite):
+        super(SuiteEvent, self).__init__()
+        self._suite = suite
+
+    @property
+    def suite(self):
+        """The Suite instance associated with this event"""
+        return self._suite
+
+
+class SuiteStartedEvent(SuiteEvent):
+    """Triggered when a suite is about to start it's execution"""
+    event_type = EventType.SUITE_STARTED
+
+
+class SuiteEndedEvent(SuiteEvent):
+    """Triggered when a suite has finished it's execution"""
+    event_type = EventType.SUITE_ENDED
+
+    def __init__(self, suite, start_time, status):
+        super(SuiteEndedEvent, self).__init__(suite)
+        self._start_time = start_time
+        self._status = status
+        self._duration = self.timestamp - start_time
+
+    @property
+    def start_time(self):
+        """The timestamp when the suite started"""
+        return self._start_time
+
+    @property
+    def duration(self):
+        """The suite execution time in ms"""
+        return self._duration
+
+    @property
+    def status(self):
+        """The suite's status"""
+        return self._status
+
+
+# -- TEST related events --
+
+
+class TestEvent(Event):
+    """Abstract class for all TestScript related events"""
+
+    def __init__(self, test_script):
+        super(TestEvent, self).__init__()
+        self._test_script = test_script
+
+    @property
+    def test_script(self):
+        """The TestScript instance associated with this event"""
+        return self._test_script
+
+
+class TestStartedEvent(TestEvent):
+    """Triggered when a test is about to start it's execution"""
+    event_type = EventType.TEST_STARTED
+
+    def __init__(self, test_script, data_provider):
+        super(TestStartedEvent, self).__init__(test_script)
+        self._data_provider = data_provider
+
+    @property
+    def data_provider(self):
+        """The instance of the data provider driving this test execution"""
+        return self._data_provider
+
+
+class TestEndedEvent(TestEvent):
+    """Triggered when a test has finished it's execution"""
+    event_type = EventType.TEST_ENDED
+
+    def __init__(self, test_script, start_time, status, exceptions):
+        super(TestEndedEvent, self).__init__(test_script)
+        self._start_time = start_time
+        self._status = status
+        self._exceptions = exceptions
+        self._duration = self.timestamp - start_time
+
+    @property
+    def start_time(self):
+        """The timestamp when the test started"""
+        return self._start_time
+
+    @property
+    def duration(self):
+        """The test execution time in ms"""
+        return self._duration
+
+    @property
+    def status(self):
+        """The test's status"""
+        return self._status
+
+    @property
+    def exceptions(self):
+        """
+        The exceptions raised during this test. A list of 3-tuple items (like sys.exc_info)
+        composed of (Exception type, Exception instance, Traceback instance)
+        """
+        return self._exceptions
+
+
+class TestBlockStartedEvent(TestEvent):
+    """Abstract class for test's block started: setup, iteration(s), tear down"""
+
+    def __init__(self, test_script, data):
+        super(TestBlockStartedEvent, self).__init__(test_script)
+        self._data = data
+
+    @property
+    def data(self):
+        """the data for this test block"""
+        return self._data
+
+
+class TestBlockEndedEvent(TestEvent):
+    """Abstract class for test's block ended: setup, iteration(s), tear down"""
+
+    def __init__(self, test_script, start_time, status, exception):
+        super(TestBlockEndedEvent, self).__init__(test_script)
+        self._start_time = start_time
+        self._status = status
+        self._exception = exception
+        self._duration = self.timestamp - start_time
+
+    @property
+    def start_time(self):
+        """The timestamp when the block started"""
+        return self._start_time
+
+    @property
+    def duration(self):
+        """The block execution time in ms"""
+        return self._duration
+
+    @property
+    def status(self):
+        """The block's status"""
+        return self._status
+
+    @property
+    def exception(self):
+        """
+        The exception raised by this block (if any) as a 3-tuple (like sys.exc_info)
+        composed of (Exception type, Exception instance, Traceback instance)
+        """
+        return self._exception
+
+
+class TestSetupStartedEvent(TestBlockStartedEvent):
+    """Triggered when a test's setup phase is about to start"""
+    event_type = EventType.TEST_SETUP_STARTED
+
+
+class TestSetupEndedEvent(TestBlockEndedEvent):
+    """Triggered when a test's setup phase has concluded"""
+    event_type = EventType.TEST_SETUP_ENDED
+
+
+class TestIterationStartedEvent(TestBlockStartedEvent):
+    """Triggered when a test's iteration is about to start"""
+    event_type = EventType.TEST_ITERATION_STARTED
+
+
+class TestIterationEndedEvent(TestBlockEndedEvent):
+    """Triggered when a test's iteration has concluded"""
+    event_type = EventType.TEST_ITERATION_ENDED
+
+
+class TestTearDownStartedEvent(TestBlockStartedEvent):
+    """Triggered when a test's tear down phase is about to start"""
+    event_type = EventType.TEST_TEARDOWN_STARTED
+
+
+class TestTearDownEndedEvent(TestBlockEndedEvent):
+    """Triggered when a test's tear down phase has concluded"""
+    event_type = EventType.TEST_TEARDOWN_ENDED
+
+
 # -- STEP related events --
 
 
@@ -129,142 +318,3 @@ class StepSkippedEvent(StepEvent):
         as a 3-tuple (like sys.exc_info) composed of (Exception type, Exception isntance, Traceback instance)
         """
         return self._exception
-
-
-# -- TEST related events --
-
-
-class TestEvent(Event):
-    """Abstract class for all TestScript related events"""
-
-    def __init__(self, test_script):
-        super(TestEvent, self).__init__()
-        self._test_script = test_script
-
-    @property
-    def test_script(self):
-        return self._test_script
-
-
-class TestStartedEvent(TestEvent):
-    """Triggered when a test is about to start it's execution"""
-    event_type = EventType.TEST_STARTED
-
-    def __init__(self, test_script, data_provider):
-        super(TestStartedEvent, self).__init__(test_script)
-        self._data_provider = data_provider
-
-    @property
-    def data_provider(self):
-        return self._data_provider
-
-
-class TestEndedEvent(TestEvent):
-    """Triggered when a test has finished it's execution"""
-    event_type = EventType.TEST_ENDED
-
-    def __init__(self, test_script, start_time, status, exceptions):
-        super(TestEndedEvent, self).__init__(test_script)
-        self._start_time = start_time
-        self._status = status
-        self._exceptions = exceptions
-        self._duration = self.timestamp - start_time
-
-    @property
-    def start_time(self):
-        """The timestamp when the test started"""
-        return self._start_time
-
-    @property
-    def duration(self):
-        """The test execution time in ms"""
-        return self._duration
-
-    @property
-    def status(self):
-        """The test's status"""
-        return self._status
-
-    @property
-    def exceptions(self):
-        """
-        The exceptions raised during this test. A list of 3-tuple items (like sys.exc_info)
-        composed of (Exception type, Exception instance, Traceback instance)
-        """
-        return self._exceptions
-
-
-class TestBlockStartedEvent(TestEvent):
-    """Abstract class for test's block started: setup, iteration(s), tear down"""
-
-    def __init__(self, test_script, data):
-        super(TestBlockStartedEvent, self).__init__(test_script)
-        self._data = data
-
-    @property
-    def data(self):
-        return self._data
-
-
-class TestBlockEndedEvent(TestEvent):
-    """Abstract class for test's block ended: setup, iteration(s), tear down"""
-
-    def __init__(self, test_script, start_time, status, exception):
-        super(TestBlockEndedEvent, self).__init__(test_script)
-        self._start_time = start_time
-        self._status = status
-        self._exception = exception
-        self._duration = self.timestamp - start_time
-
-    @property
-    def start_time(self):
-        """The timestamp when the block started"""
-        return self._start_time
-
-    @property
-    def duration(self):
-        """The block execution time in ms"""
-        return self._duration
-
-    @property
-    def status(self):
-        """The block's status"""
-        return self._status
-
-    @property
-    def exception(self):
-        """
-        The exception raised by this block (if any) as a 3-tuple (like sys.exc_info)
-        composed of (Exception type, Exception instance, Traceback instance)
-        """
-        return self._exception
-
-
-class TestSetupStartedEvent(TestBlockStartedEvent):
-    """Triggered when a test's setup phase is about to start"""
-    event_type = EventType.TEST_SETUP_STARTED
-
-
-class TestSetupEndedEvent(TestBlockEndedEvent):
-    """Triggered when a test's setup phase has concluded"""
-    event_type = EventType.TEST_SETUP_ENDED
-
-
-class TestIterationStartedEvent(TestBlockStartedEvent):
-    """Triggered when a test's iteration is about to start"""
-    event_type = EventType.TEST_ITERATION_STARTED
-
-
-class TestIterationEndedEvent(TestBlockEndedEvent):
-    """Triggered when a test's iteration has concluded"""
-    event_type = EventType.TEST_ITERATION_ENDED
-
-
-class TestTearDownStartedEvent(TestBlockStartedEvent):
-    """Triggered when a test's tear down phase is about to start"""
-    event_type = EventType.TEST_TEARDOWN_STARTED
-
-
-class TestTearDownEndedEvent(TestBlockEndedEvent):
-    """Triggered when a test's tear down phase has concluded"""
-    event_type = EventType.TEST_TEARDOWN_ENDED

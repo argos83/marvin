@@ -2,7 +2,7 @@ import marvin
 from marvin.core.status import Status
 from marvin.exceptions import ContextSkippedException
 from marvin.report import EventType as E
-from tests.stubs import DummyTest, DummyData
+from tests.stubs import DummyTest, DummyData, DummyStep
 
 
 ALL_TEST_EVENTS = [E.TEST_STARTED,
@@ -22,12 +22,14 @@ def test_test_basic(ctx):
 def test_test_events(ctx):
     observer = ctx.observer(*ALL_TEST_EVENTS)
 
-    ctx.test(DummyTest).execute()
+    t = ctx.test(DummyTest)
+    t.execute()
 
     triggered_events = [e.event_type for e in observer.events]
 
     assert triggered_events == ALL_TEST_EVENTS
     assert ctx.last_reported_status == Status.PASS
+    assert all(e.test_script == t for e in observer.events)
 
 
 def test_unimplemented_methods(ctx):
@@ -157,3 +159,14 @@ def test_tests_are_reportable(ctx):
     assert test.name == 'SimpleTest'
     assert test.description == 'Test description'
     assert test.tags == {'tags', 'and', 'magic'}
+
+
+def test_can_run_steps(ctx):
+    observer = ctx.observer(E.STEP_ENDED)
+
+    class SimpleTest(marvin.TestScript):
+        def run(self, data):
+            self.step(DummyStep).execute()
+
+    ctx.test(SimpleTest).execute()
+    assert observer.last_event.step.name == 'DummyStep'

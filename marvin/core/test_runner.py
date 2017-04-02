@@ -27,7 +27,7 @@ class TestRunner(object):
 
         self._execute()
 
-        test_ended = TestEndedEvent(self, test_started.timestamp, self._status, self._exceptions)
+        test_ended = TestEndedEvent(self._test, test_started.timestamp, self._status, self._exceptions)
         self._test.publisher.notify(test_ended)
         self._test.ctx.sub_context_finished(self._status)
 

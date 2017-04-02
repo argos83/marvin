@@ -3,12 +3,12 @@ import pytest
 from marvin import Step
 from marvin.exceptions import ContextSkippedException, ExpectedExceptionNotRaised, StepsFailedInContext
 from marvin.report import EventType
-from tests.stubs import DummyStep, EchoStep
+from tests.stubs import SampleStep, DummyStep
 
 
 def test_step_basic(ctx):
     """Verify a basic step operation"""
-    result = ctx.step(DummyStep).execute(2, 4, operation=lambda x, y: x * y)
+    result = ctx.step(SampleStep).execute(2, 4, operation=lambda x, y: x * y)
     assert result == 8
 
 
@@ -37,7 +37,7 @@ def test_step_events(ctx):
     def multiply(x, y):
         return x * y
 
-    ctx.step(DummyStep).execute(2, 4, operation=multiply)
+    ctx.step(SampleStep).execute(2, 4, operation=multiply)
 
     assert len(observer.events) == 2
 
@@ -46,7 +46,7 @@ def test_step_events(ctx):
 
     assert start_event.timestamp <= end_event.timestamp
     assert start_event.step == end_event.step
-    assert start_event.step.name == 'DummyStep'
+    assert start_event.step.name == 'SampleStep'
     assert start_event.args == [2, 4]
     assert start_event.kwargs == {'operation': multiply}
 
@@ -87,7 +87,7 @@ def test_step_can_be_skipped(ctx):
     observer = ctx.observer(EventType.STEP_SKIPPED, EventType.STEP_ENDED)
 
     with pytest.raises(ContextSkippedException) as exc_info:
-        ctx.step(EchoStep).execute(action=lambda s: s.skip('Kaput'))
+        ctx.step(DummyStep).execute(action=lambda s: s.skip('Kaput'))
 
     skip_event, end_event = observer.events
 
@@ -102,7 +102,7 @@ def test_step_fails_when_exception_is_raised(ctx):
     observer = ctx.observer(EventType.STEP_ENDED)
 
     with pytest.raises(ZeroDivisionError) as exc_info:
-        ctx.step(EchoStep).execute(action=lambda _: 5 / 0)
+        ctx.step(DummyStep).execute(action=lambda _: 5 / 0)
 
     end_event = observer.last_event
     assert end_event.status == 'FAIL'
@@ -113,7 +113,7 @@ def test_step_fails_when_exception_is_raised(ctx):
 def test_step_not_re_raising_exceptions(ctx):
     observer = ctx.observer(EventType.STEP_ENDED)
 
-    ctx.step(EchoStep).safely.execute(action=lambda _: 5 / 0)
+    ctx.step(DummyStep).safely.execute(action=lambda _: 5 / 0)
     end_event = observer.last_event
     assert end_event.status == 'FAIL'
     assert end_event.exception[0] == ZeroDivisionError
@@ -123,7 +123,7 @@ def test_step_not_re_raising_exceptions(ctx):
 def test_step_expecting_exception_class(ctx):
     observer = ctx.observer(EventType.STEP_ENDED)
 
-    ctx.step(EchoStep).expect_exception(ZeroDivisionError).execute(action=lambda _: 5 / 0)
+    ctx.step(DummyStep).expect_exception(ZeroDivisionError).execute(action=lambda _: 5 / 0)
 
     end_event = observer.last_event
     assert end_event.status == 'PASS'
@@ -134,7 +134,7 @@ def test_step_expecting_exception_class(ctx):
 def test_step_expecting_exception_callable(ctx):
     observer = ctx.observer(EventType.STEP_ENDED)
 
-    ctx.step(EchoStep).expect_exception(lambda e: str(e).startswith('Oops')).execute(runtime_error='Oops error')
+    ctx.step(DummyStep).expect_exception(lambda e: str(e).startswith('Oops')).execute(runtime_error='Oops error')
     end_event = observer.last_event
     assert end_event.status == 'PASS'
     assert end_event.exception[0] == RuntimeError
@@ -145,7 +145,7 @@ def test_step_expecting_different_exception(ctx):
     observer = ctx.observer(EventType.STEP_ENDED)
 
     with pytest.raises(RuntimeError) as exc_info:
-        ctx.step(EchoStep).expect_exception(AssertionError).execute(runtime_error='different error')
+        ctx.step(DummyStep).expect_exception(AssertionError).execute(runtime_error='different error')
     end_event = observer.last_event
 
     assert end_event.status == 'FAIL'
@@ -157,7 +157,7 @@ def test_step_expects_exception_but_nothing_raised(ctx):
     observer = ctx.observer(EventType.STEP_ENDED)
 
     with pytest.raises(ExpectedExceptionNotRaised) as exc_info:
-        ctx.step(EchoStep).expect_exception(ZeroDivisionError).execute(action=lambda _: 5 / 1)
+        ctx.step(DummyStep).expect_exception(ZeroDivisionError).execute(action=lambda _: 5 / 1)
 
     end_event = observer.last_event
     assert end_event.status == 'FAIL'
@@ -169,11 +169,11 @@ def test_step_expects_exception_but_nothing_raised(ctx):
 def test_step_matching_one_of_many_exception_expectations(ctx):
     observer = ctx.observer(EventType.STEP_ENDED)
 
-    ctx.step(EchoStep).expect_exception(ZeroDivisionError,
-                                        AssertionError,
-                                        "not-a-valid-expectation",
-                                        lambda e: str(e) == 'bbb',
-                                        lambda e: str(e) == 'aaa').execute(runtime_error='aaa')
+    ctx.step(DummyStep).expect_exception(ZeroDivisionError,
+                                         AssertionError,
+                                         "not-a-valid-expectation",
+                                         lambda e: str(e) == 'bbb',
+                                         lambda e: str(e) == 'aaa').execute(runtime_error='aaa')
     end_event = observer.last_event
     assert end_event.status == 'PASS'
     assert end_event.exception[0] == RuntimeError
@@ -184,7 +184,7 @@ def test_step_never_failing(ctx):
     observer = ctx.observer(EventType.STEP_ENDED)
 
     with pytest.raises(RuntimeError) as exc_info:
-        ctx.step(EchoStep).do_not_fail.execute(runtime_error='Error')
+        ctx.step(DummyStep).do_not_fail.execute(runtime_error='Error')
 
     end_event = observer.last_event
     assert end_event.status == 'PASS'
@@ -195,7 +195,7 @@ def test_step_never_failing(ctx):
 def test_step_with_context_manager(ctx):
     observer = ctx.observer(EventType.STEP_ENDED)
 
-    with ctx.step(DummyStep).do(2, 4, operation=lambda x, y: x * y) as (step, result):
+    with ctx.step(SampleStep).do(2, 4, operation=lambda x, y: x * y) as (step, result):
         step.tag('dynamic', 'tagging')
 
     end_event = observer.last_event
@@ -224,7 +224,7 @@ def test_step_context_not_called_if_error(ctx):
     invoked = False
 
     with pytest.raises(ZeroDivisionError) as exc_info:
-        with ctx.step(DummyStep).do(5, 0, operation=lambda x, y: x / y):
+        with ctx.step(SampleStep).do(5, 0, operation=lambda x, y: x / y):
             invoked = True
 
     assert not invoked
@@ -242,7 +242,7 @@ def test_step_context_with_safe_exec(ctx):
     invoked = False
     observer = ctx.observer(EventType.STEP_ENDED)
 
-    with ctx.step(DummyStep).safely.do(5, 0, operation=lambda x, y: x / y) as (step, exc_info):
+    with ctx.step(SampleStep).safely.do(5, 0, operation=lambda x, y: x / y) as (step, exc_info):
         invoked = True
 
     assert invoked
@@ -259,7 +259,7 @@ def test_step_context_when_do_not_fail(ctx):
     invoked = False
 
     with pytest.raises(ZeroDivisionError) as exc_info:
-        with ctx.step(DummyStep).do_not_fail.do(5, 0, operation=lambda x, y: x / y):
+        with ctx.step(SampleStep).do_not_fail.do(5, 0, operation=lambda x, y: x / y):
             invoked = True
 
     assert not invoked
@@ -273,7 +273,7 @@ def test_step_context_failing(ctx):
     observer = ctx.observer(EventType.STEP_ENDED)
 
     with pytest.raises(RuntimeError) as exc_info:
-        with ctx.step(DummyStep).do(6, 4, operation=lambda x, y: x + y) as (_step, result):
+        with ctx.step(SampleStep).do(6, 4, operation=lambda x, y: x + y) as (_step, result):
             if result % 2 == 0:
                 raise RuntimeError('blah')
 
@@ -286,7 +286,7 @@ def test_step_context_failing_when_do_not_fail(ctx):
     observer = ctx.observer(EventType.STEP_ENDED)
 
     with pytest.raises(RuntimeError) as exc_info:
-        with ctx.step(DummyStep).do_not_fail.do(6, 4, operation=lambda x, y: x + y) as (_step, result):
+        with ctx.step(SampleStep).do_not_fail.do(6, 4, operation=lambda x, y: x + y) as (_step, result):
             if result % 2 == 0:
                 raise RuntimeError('blah')
 
@@ -298,7 +298,7 @@ def test_step_context_failing_when_do_not_fail(ctx):
 def test_step_exception_expectation_applies_for_context(ctx):
     observer = ctx.observer(EventType.STEP_ENDED)
 
-    with ctx.step(EchoStep).expect_exception(ZeroDivisionError).do(action=lambda _: 5 / 1) as (_step, result):
+    with ctx.step(DummyStep).expect_exception(ZeroDivisionError).do(action=lambda _: 5 / 1) as (_step, result):
         result / 0
 
     end_event = observer.last_event
@@ -313,7 +313,7 @@ def test_step_do_not_fail_and_expected_exception(ctx):
     observer = ctx.observer(EventType.STEP_ENDED)
 
     with pytest.raises(ExpectedExceptionNotRaised):
-        ctx.step(EchoStep).do_not_fail.expect_exception(ZeroDivisionError).execute(action=lambda _: 5 / 1)
+        ctx.step(DummyStep).do_not_fail.expect_exception(ZeroDivisionError).execute(action=lambda _: 5 / 1)
 
     end_event = observer.last_event
     assert end_event.status == 'PASS'
@@ -324,7 +324,7 @@ def test_step_context_can_trigger_skip(ctx):
     observer = ctx.observer(EventType.STEP_SKIPPED, EventType.STEP_ENDED)
 
     with pytest.raises(ContextSkippedException) as exc_info:
-        with ctx.step(DummyStep).do(6, 4, operation=lambda x, y: x + y) as (step, _result):
+        with ctx.step(SampleStep).do(6, 4, operation=lambda x, y: x + y) as (step, _result):
             step.skip('skipping in context')
 
     skip_event, end_event = observer.events
@@ -359,7 +359,7 @@ def test_steps_can_run_other_steps(ctx):
     class MacroStep(Step):
 
         def run(self, add_me):
-            intermediate_result = self.step(DummyStep).execute(2, 4, operation=lambda x, y: x * y)
+            intermediate_result = self.step(SampleStep).execute(2, 4, operation=lambda x, y: x * y)
             return intermediate_result + add_me
 
     result = ctx.step(MacroStep).execute(3)
@@ -371,8 +371,8 @@ def test_step_fails_if_sub_step_fails(ctx):
     """A step should fail if sub steps have failed (even when no exceptions are raised)"""
     class MacroStep(Step):
         def run(self):
-            self.step(DummyStep).safely.execute(2, 0, operation=lambda x, y: x / y)
-            self.step(DummyStep).safely.execute(4, 0, operation=lambda x, y: x / y)
+            self.step(SampleStep).safely.execute(2, 0, operation=lambda x, y: x / y)
+            self.step(SampleStep).safely.execute(4, 0, operation=lambda x, y: x / y)
 
     observer = ctx.observer(EventType.STEP_ENDED)
 
@@ -388,7 +388,7 @@ def test_do_not_fail_step_regardless_sub_steps(ctx):
     """A step called with do_not_fail should pass regardless failing sub-steps"""
     class MacroStep(Step):
         def run(self):
-            self.step(DummyStep).safely.execute(2, 0, operation=lambda x, y: x / y)
+            self.step(SampleStep).safely.execute(2, 0, operation=lambda x, y: x / y)
 
     observer = ctx.observer(EventType.STEP_ENDED)
 
@@ -404,7 +404,7 @@ def test_sub_step_with_do_not_fail(ctx):
     """A step run with do_not_fail should pass even if sub steps have failed (with or without raised exceptions)"""
     class MacroStep(Step):
         def run(self):
-            self.step(DummyStep).do_not_fail.safely.execute(2, 0, operation=lambda x, y: x / y)
+            self.step(SampleStep).do_not_fail.safely.execute(2, 0, operation=lambda x, y: x / y)
 
     observer = ctx.observer(EventType.STEP_ENDED)
 
@@ -412,3 +412,19 @@ def test_sub_step_with_do_not_fail(ctx):
 
     end_event = observer.last_event
     assert end_event.status == 'PASS'
+
+
+def test_step_skipped_if_substep_skipped(ctx):
+    class MacroStep(Step):
+        def run(self):
+            self.step(DummyStep).execute(skip='foo')
+
+    observer = ctx.observer(EventType.STEP_ENDED)
+
+    with pytest.raises(ContextSkippedException):
+        ctx.step(MacroStep).execute()
+
+    step1, step2 = observer.events
+    assert step1.status == step2.status == 'SKIP'
+    assert step1.exception[1].reason == 'foo'
+    assert step1.exception[1] == step2.exception[1]
