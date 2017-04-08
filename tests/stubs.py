@@ -1,4 +1,4 @@
-from marvin import Step, TestScript
+from marvin import Step, Suite, TestScript
 from marvin.data.data_provider import DataProvider
 from marvin.core.context import Context
 from marvin.core.step_running_context import StepRunningContext
@@ -27,6 +27,23 @@ class DummyObserver(object):
     @property
     def last_event(self):
         return self.events[-1]
+
+
+class DummySuite(Suite):
+
+    def __init__(self):
+        super(DummySuite, self).__init__()
+        self._tests = []
+
+    def add_test(self, test, data=None):
+        self._tests.append((test, data))
+
+    def tests(self):
+        for t in self._tests:
+            yield t
+
+    def observer(self, *event_types):
+        return DummyObserver(self.publisher, *event_types)
 
 
 class DummyData(DataProvider):

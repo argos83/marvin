@@ -7,6 +7,9 @@ from marvin.report.events import SuiteStartedEvent, SuiteEndedEvent
 
 
 class Suite(Context, TestRunningContext, Reportable):
+    """
+    A context representing a collection of tests
+    """
 
     def __init__(self):
         Context.__init__(self, parent_context=None)
@@ -14,6 +17,9 @@ class Suite(Context, TestRunningContext, Reportable):
         Reportable.__init__(self)
 
     def execute(self):
+        """
+        Executes the tests in this suite
+        """
         start_event = SuiteStartedEvent(self)
         self.publisher.notify(start_event)
 
@@ -34,4 +40,6 @@ class Suite(Context, TestRunningContext, Reportable):
 
         if self._sub_context_results[Status.FAIL]:
             return Status.FAIL
-        return Status.PASS
+        elif self._sub_context_results[Status.PASS]:
+            return Status.PASS
+        return Status.SKIP

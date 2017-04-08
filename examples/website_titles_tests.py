@@ -1,8 +1,8 @@
-from test_cases.website_titles import WebsiteTitles
-
 from marvin.data.data_providers.json_data_provider import JSONDataProvider
 from marvin.report.observers.event_logger import EventLogger
 from marvin import Suite
+
+from test_cases.website_titles import WebsiteTitles
 
 
 class WebsiteTitlesSuite(Suite):
