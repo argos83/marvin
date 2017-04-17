@@ -109,7 +109,7 @@ class StepRunner(object):
         return result, exception
 
     def _any_sub_steps_failed(self):
-        failed_subcontexts = self._step._sub_context_results[Status.FAIL]
+        failed_subcontexts = self._step.context_summary[Status.FAIL]
         if failed_subcontexts:
             return StepsFailedInContext, StepsFailedInContext(failed_subcontexts), None
         return NO_EXCEPTION

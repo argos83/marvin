@@ -38,8 +38,8 @@ class Suite(Context, TestRunningContext, Reportable):
         for test_class, data_provider in self.tests():
             self.test(test_class).execute(data_provider=data_provider)
 
-        if self._sub_context_results[Status.FAIL]:
+        if self.context_summary[Status.FAIL]:
             return Status.FAIL
-        elif self._sub_context_results[Status.PASS]:
+        elif self.context_summary[Status.PASS]:
             return Status.PASS
         return Status.SKIP
