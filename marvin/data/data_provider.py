@@ -7,8 +7,8 @@ class DataProvider(object):
     def __init__(self, source_id):
         """
         All data provider's should support instantiation from one given argument representing
-        the source of the data to be fetched. 
-        E.g. for file-based data source (e.g. JSon, XML, YML, etc) the data source id might be 
+        the source of the data to be fetched.
+        E.g. for file-based data source (e.g. JSon, XML, YML, etc) the data source id might be
         the path of the file. For a DB provider, it might be a record id
         """
         self._source_id = source_id

@@ -1,60 +1,72 @@
+import sys
+
 from colorama import Fore, Back
 
-from marvin import Publisher
-from marvin import Events
+import marvin.util.files
+from marvin.core.status import Status
+from marvin.report import EventType
+
+
+COLORS = {
+    Status.PASS: Fore.GREEN + '%s' + Fore.RESET,
+    Status.FAIL: Fore.RED + '%s' + Fore.RESET,
+    Status.SKIP: Fore.BLUE + Back.WHITE + '%s' + Back.RESET + Fore.RESET,
+    'HEADER': Fore.CYAN + '%s' + Fore.RESET
+}
 
 
 class EventLogger(object):
+    """
+    Prints the summary of test execution results in a terminal or file
+    """
 
-    def __init__(self):
-        Publisher.subscribe(Events.STEP_STARTED, self.on_step_started)
-        Publisher.subscribe(Events.STEP_ENDED, self.on_step_ended)
-        Publisher.subscribe(Events.TEST_STARTED, self.on_test_started)
-        Publisher.subscribe(Events.TEST_ENDED, self.on_test_ended)
-        self._level = 0
+    def __init__(self, publisher, dest=sys.stdout):
+        """
+        Builds and subscribes an EventLogger
+        :param publisher: The context's publisher instance
+        :param dest: The output destination (defaults to sys.stdout)
+        """
+        publisher.subscribe(self.on_step_started, EventType.STEP_STARTED)
+        publisher.subscribe(self.on_step_ended, EventType.STEP_ENDED)
+        publisher.subscribe(self.on_test_started, EventType.TEST_STARTED)
+        publisher.subscribe(self.on_test_ended, EventType.TEST_ENDED)
         self._indent = "  "
+        self._o = dest
+        self._color = marvin.util.files.supports_color(self._o)
 
-    def on_step_started(self, _event, data):
-        self._level += 1
-        step = data['step']
+    def on_step_started(self, event):
+        step = event.step
 
-        print "----------------------------------------------------------------"
-        print "%s%s: %s (%s)" % (self._indent * self._level, step.name, step.description, ", ".join(step.tags))
+        self._p("-" * 64)
+        self._p("%s%s: %s (%s)", self._indent * step.level, step.name, step.description, ", ".join(step.tags))
 
-    def on_step_ended(self, _event, data):
-        step = data['step']
-        duration = data['timestamp'] - data['start_time']
+    def on_step_ended(self, event):
+        step = event.step
+        status = self._colored_status(event.status)
 
-        status = data['status']
-        if status == 'PASSED':
-            status = Fore.GREEN + status + Fore.RESET
-        elif status == 'FAILED':
-            status = Fore.RED + status + Fore.RESET
-        elif status == 'SKIPPED':
-            status = Fore.BLUE + Back.WHITE + status + Back.RESET + Fore.RESET
+        self._p("%s[%s] %s (%d ms)", self._indent * step.level, status, step.name, event.duration)
 
-        print "%s[%s] %s (%d ms)" % (self._indent * self._level, status, step.name, duration)
-        self._level -= 1
+    def on_test_started(self, event):
+        test_script = event.test_script
+        test_header = self._in_color('HEADER', 'TEST')
 
-    def on_test_started(self, _event, data):
-        test_script = data['test_script']
+        self._p("[%s] %s - %s", test_header, test_script.name, test_script.description)
 
-        test_header = Fore.CYAN + 'TEST' + Fore.RESET
+    def on_test_ended(self, event):
+        test_script = event.test_script
+        test_header = self._in_color('HEADER', 'TEST')
+        status = self._colored_status(event.status)
 
-        print "[%s] %s - %s" % (
-            test_header, test_script.name, test_script.description
-        )
+        self._p("-" * 64)
+        self._p("[%s] %s - %s", test_header, test_script.name, status)
 
-    def on_test_ended(self, _event, data):
-        test_script = data['test_script']
+    def _p(self, s, *args):
+        self._o.write(s % args + '\n')
 
-        test_header = Fore.CYAN + 'TEST' + Fore.RESET
+    def _colored_status(self, status):
+        return self._in_color(status, status)
 
-        status = data['status']
-        if status == 'PASSED':
-            status = Fore.GREEN + status + Fore.RESET
-        elif status == 'FAILED':
-            status = Fore.RED + status + Fore.RESET
-
-        print "----------------------------------------------------------------"
-        print "[%s] %s - %s" % (test_header, test_script.name, status)
+    def _in_color(self, color, s):
+        if self._color:
+            return COLORS.get(color, '%s') % s
+        return s
