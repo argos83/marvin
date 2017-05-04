@@ -71,7 +71,6 @@ class EventLogger(object):
     def on_iteration_ended(self, event):
         test_object = self._get_suite_status_item(event.test_script.name)
         test_object["iterations"][event.status] += 1
-        #self._iterations_status[event.status] += 1
         self._on_block_ended(event, 'ITERATION FINISHED')
 
     def on_teardown_started(self, event):
