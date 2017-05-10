@@ -45,21 +45,10 @@ class EventLogger(object):
         self._indent = INDENT_CHAR * 2
         self._o = dest
         self._color = marvin.util.files.supports_color(self._o)
-        self._iterations_status = {
-
-        }
         self._suite_status = []
+        self._current_status = {}
 
     def on_setup_started(self, event):
-        self._suite_status.append({
-            "test_name": event.test_script.name,
-            "test_status": None,
-            "iterations": {
-                Status.PASS: 0,
-                Status.FAIL: 0,
-                Status.SKIP: 0
-            }
-        })
         self._on_block_started('SETUP STARTED')
 
     def on_setup_ended(self, event):
@@ -69,8 +58,7 @@ class EventLogger(object):
         self._on_block_started('ITERATION STARTED')
 
     def on_iteration_ended(self, event):
-        test_object = self._get_suite_status_item(event.test_script.name)
-        test_object["iterations"][event.status] += 1
+        self._current_status["iterations"][event.status] += 1
         self._on_block_ended(event, 'ITERATION FINISHED')
 
     def on_teardown_started(self, event):
@@ -104,6 +92,23 @@ class EventLogger(object):
         self._p("%s[%s] %s (%d ms)", self._indent * step.level, status, step.name, event.duration)
 
     def on_test_started(self, event):
+        # Check if the test's title is defined on the setup for the summary
+        # report. If not, we use the name of test script
+        test_name = event.test_script.name
+        setup_data = event.data_provider.setup_data()
+        if "test_report_title" in setup_data \
+                and setup_data["test_report_title"] != "":
+            test_name = setup_data["test_report_title"]
+
+        self._current_status = {
+            "test_name": test_name,
+            "test_status": None,
+            "iterations": {
+                Status.PASS: 0,
+                Status.FAIL: 0,
+                Status.SKIP: 0
+            }
+        }
         test_script = event.test_script
         test_header = self._in_color('HEADER', 'TEST')
 
@@ -113,10 +118,11 @@ class EventLogger(object):
         test_script = event.test_script
         test_header = self._in_color('HEADER', 'TEST')
         status = self._colored_status(event.status)
-        test_object = self._get_suite_status_item(test_script.name)
-        test_object["test_status"] = event.status
+        self._current_status["test_status"] = event.status
 
-        if event.status != Status.PASS:
+        self._suite_status.append(self._current_status)
+
+        if event.status != Status.PASS and len(event.exceptions) > 0:
             exception = event.exceptions[0]
             self._p(repr(exception[1]))
             self._p(''.join(traceback.format_tb(exception[2])))
@@ -144,13 +150,3 @@ class EventLogger(object):
         if self._color:
             return COLORS.get(color, "%s") % s
         return s
-
-    def _get_suite_status_item(self, test_name):
-        for item in self._suite_status:
-            if item["test_name"] == test_name:
-                test_status = item
-                break
-        else:
-            test_status = None
-
-        return test_status
