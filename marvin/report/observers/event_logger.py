@@ -96,8 +96,7 @@ class EventLogger(object):
         # report. If not, we use the name of test script
         test_name = event.test_script.name
         setup_data = event.data_provider.setup_data()
-        if "test_report_title" in setup_data \
-                and setup_data["test_report_title"] != "":
+        if setup_data.get("test_report_title"):
             test_name = setup_data["test_report_title"]
 
         self._current_status = {
@@ -122,7 +121,7 @@ class EventLogger(object):
 
         self._suite_status.append(self._current_status)
 
-        if event.status != Status.PASS and len(event.exceptions) > 0:
+        if event.status != Status.PASS and any(event.exceptions):
             exception = event.exceptions[0]
             self._p(repr(exception[1]))
             self._p(''.join(traceback.format_tb(exception[2])))
