@@ -8,6 +8,10 @@ class NullDataProvider(DataProvider):
     For cases where test scripts aren't implemented as a data-driven (more like unit test frameworks)
     """
 
+    @classmethod
+    def handles(cls, source_id):
+        return source_id is None
+
     def __init__(self):
         super(NullDataProvider, self).__init__(None)
 

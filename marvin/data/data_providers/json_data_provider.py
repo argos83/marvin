@@ -2,10 +2,10 @@
 
 import json
 
-from marvin.data.data_provider import DataProvider
+from marvin.data.file_data_provider import FileDataProvider
 
 
-class JSONDataProvider(DataProvider):
+class JSONDataProvider(FileDataProvider):
     """
     DataDriven data provider for JSON sources.
     The data_source_id of this provider is the path to a JSON file with the following structure:
@@ -23,18 +23,10 @@ class JSONDataProvider(DataProvider):
         }
     """
 
-    def __init__(self, *args, **kargs):
-        super(JSONDataProvider, self).__init__(*args, **kargs)
-        with open(self._source_id, "r") as file_descriptor:
-            self.json = json.load(file_descriptor)
+    @classmethod
+    def load_obj(cls, file_handle):
+        return json.load(file_handle)
 
-    def setup_data(self):
-        return self.json.get('setup', {})
-
-    # GENERATOR
-    def iteration_data(self):
-        for it_data in self.json.get('iterations', []):
-            yield it_data
-
-    def tear_down_data(self):
-        return self.json.get('tear_down', {})
+    @classmethod
+    def supported_extensions(cls):
+        return ['json']
