@@ -1,0 +1,7 @@
+a_nested:
+  int_value: 2
+  new_value: foo
+
+extra_key: bar
+
+a_test:

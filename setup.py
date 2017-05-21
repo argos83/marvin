@@ -8,6 +8,11 @@ setup(name='marvin',
       author_email='argos83@gmail.com',
       packages=find_packages(exclude=("tests", "examples")),
       include_package_data=True,
-      install_requires=['colorama'],
+      install_requires=['colorama', 'pyyaml'],
       tests_require=['pytest', 'pytest-cov', 'flake8'],
-      zip_safe=False)
+      zip_safe=False,
+      entry_points={
+          'console_scripts': [
+              'marvin=marvin.runner.cli:main'
+          ]
+      })

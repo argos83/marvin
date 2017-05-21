@@ -1,0 +1,11 @@
+some_key: with a value
+a_nested:
+  key: with another value
+  int_value: 3
+  a_list:
+    - test1
+    - test2
+    - test3
+
+a_test:
+  another_test: a_value
