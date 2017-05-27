@@ -1,0 +1,13 @@
+setup:
+  a_list: [1, 2]
+  foo: bar
+
+iterations:
+  - arg1: iteration 1
+    arg2: True
+
+  - arg1: iteration 2
+    arg2: False
+
+tear_down:
+  foo: baz

@@ -16,7 +16,9 @@ def test_suite_events():
     triggered_events = [e.event_type for e in observer.events]
 
     assert triggered_events == [E.SUITE_STARTED, E.SUITE_ENDED]
-    assert observer.last_event.status == Status.PASS
+    end_event = observer.last_event
+    assert end_event.status == Status.PASS
+    assert end_event.duration == end_event.timestamp - end_event.start_time
     assert all(e.suite == suite for e in observer.events)
 
 
@@ -37,7 +39,7 @@ def test_skip_exceptions_not_skipping_suite():
 
     suite.add_test(DummyTest)
     suite.add_test(DummyTest, DummyData()
-                   .with_setup_data(skip='skipped'))
+                   .with_setup(skip='skipped'))
     suite.add_test(DummyTest, DummyData()
                    .with_iteration()
                    .with_iteration(skip='skipped')
@@ -65,9 +67,9 @@ def test_suite_status_skip_if_all_tests_skipped():
     observer = suite.observer(E.SUITE_ENDED)
 
     suite.add_test(DummyTest, DummyData()
-                   .with_setup_data(skip='skipped'))
+                   .with_setup(skip='skipped'))
     suite.add_test(DummyTest, DummyData()
-                   .with_setup_data(skip='skipped'))
+                   .with_setup(skip='skipped'))
     suite.execute()
     end_event = observer.last_event
     assert end_event.status == Status.SKIP
@@ -78,7 +80,7 @@ def test_suite_status_fail_if_one_test_fails():
     observer = suite.observer(E.TEST_ENDED, E.SUITE_ENDED)
 
     suite.add_test(DummyTest)  # passes
-    suite.add_test(DummyTest, DummyData().with_setup_data(skip='skipped'))  # skipped
+    suite.add_test(DummyTest, DummyData().with_setup(skip='skipped'))  # skipped
     suite.add_test(DummyTest, DummyData().with_iteration(fail='oops'))  # fails
     suite.add_test(DummyTest)  # passes
     suite.execute()

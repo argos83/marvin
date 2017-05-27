@@ -12,7 +12,7 @@ class NullDataProvider(DataProvider):
     def handles(cls, source_id):
         return source_id is None
 
-    def __init__(self):
+    def __init__(self, *_args):
         super(NullDataProvider, self).__init__(None)
 
     def setup_data(self):

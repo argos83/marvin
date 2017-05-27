@@ -47,6 +47,7 @@ def test_step_events(ctx):
     assert start_event.timestamp <= end_event.timestamp
     assert start_event.step == end_event.step
     assert start_event.step.name == 'SampleStep'
+    assert start_event.step.level == ctx.level + 1
     assert start_event.args == [2, 4]
     assert start_event.kwargs == {'operation': multiply}
 
@@ -54,6 +55,7 @@ def test_step_events(ctx):
     assert end_event.result.get() == 8
     assert end_event.status == 'PASS'
     assert end_event.exception == (None, None, None)
+    assert end_event.start_time == start_event.timestamp
 
 
 def test_plugins_can_change_step_args_and_results(ctx):
@@ -428,3 +430,12 @@ def test_step_skipped_if_substep_skipped(ctx):
     assert step1.status == step2.status == 'SKIP'
     assert step1.exception[1].reason == 'foo'
     assert step1.exception[1] == step2.exception[1]
+
+
+def test_step_has_access_to_config(ctx):
+    ctx.cfg.set('answer', 42)
+
+    answer = None
+    with ctx.step(DummyStep).do() as (step, _result):
+        answer = step.cfg.answer
+    assert answer == 42

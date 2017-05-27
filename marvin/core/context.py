@@ -1,6 +1,7 @@
 from marvin.core.status import Status
 from marvin.exceptions import ContextSkippedException
 from marvin.report import Publisher
+from marvin.util.config import Config
 
 
 class Context(object):
@@ -8,6 +9,7 @@ class Context(object):
     def __init__(self, parent_context=None):
         self._ctx = parent_context
         self._publisher = self.ctx.publisher if self.ctx else Publisher()
+        self._cfg = self.ctx.cfg if self.ctx else Config()
         self._context_summary = {
             Status.PASS: 0,
             Status.FAIL: 0,
@@ -18,6 +20,11 @@ class Context(object):
     def ctx(self):
         """This context's context (i.e. the parent context)"""
         return self._ctx
+
+    @property
+    def cfg(self):
+        """This context's config object"""
+        return self._cfg
 
     @property
     def publisher(self):

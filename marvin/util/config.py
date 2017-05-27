@@ -12,9 +12,9 @@ class Config(object):
 
     def load(self, *config_files):
         for config_file in config_files:
-            self.load_into(config_file)
+            self.load_into(None, config_file)
 
-    def load_into(self, config_file, namespace=None):
+    def load_into(self, namespace, config_file):
         name, ext = os.path.splitext(os.path.basename(config_file))
         with open(config_file) as fh:
             value = self._load_file(fh, ext.lower())
@@ -26,11 +26,11 @@ class Config(object):
         if file_type in ['.yaml', '.yml']:
             return yaml.load(fh)
         else:
-            raise ValueError("Unsupported config extension: '%s'", file_type)
+            raise ValueError("Unsupported config extension: '%s'" % file_type)
 
     def set(self, name, obj):
         if keyword.iskeyword(name):
-            raise ValueError("Can't use reserved name '%s' as config item", name)
+            raise ValueError("Can't use reserved name '%s' as config item" % name)
         self._data[name] = self._deep_merge(self._data.get(name), obj)
 
     def _deep_merge(self, base, update):

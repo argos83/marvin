@@ -19,10 +19,17 @@ class DummyObserver(object):
 
     def __init__(self, publisher, *event_types):
         self.events = []
+        self.hooks = {}
         publisher.subscribe(self.on_event, *event_types)
+
+    def hook(self, fn, *event_types):
+        for event_type in event_types:
+            self.hooks[event_type] = fn
 
     def on_event(self, event):
         self.events.append(event)
+        if event.event_type in self.hooks:
+            self.hooks[event.event_type](event)
 
     @property
     def last_event(self):
@@ -68,7 +75,7 @@ class DummyData(DataProvider):
     def tear_down_data(self):
         return self._data['tear_down']
 
-    def with_setup_data(self, **kwargs):
+    def with_setup(self, **kwargs):
         self._data['setup'] = kwargs
         return self
 
