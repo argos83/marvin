@@ -1,6 +1,5 @@
 import keyword
 import os.path
-
 import json
 import yaml
 

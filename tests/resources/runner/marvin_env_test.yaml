@@ -1,0 +1,8 @@
+env: development
+environments:
+  development:
+    - tests/resources/runner/env_test/default/*.yaml
+    - tests/resources/runner/env_test/prod/other.yaml
+  production:
+    - tests/resources/runner/env_test/default/*.yaml
+    - tests/resources/runner/env_test/prod/*.yaml

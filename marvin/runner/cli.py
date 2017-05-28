@@ -11,7 +11,7 @@ def main(exit_fn=sys.exit, args=None):
 
 def parse(args):
     parser = argparse.ArgumentParser(description='Marvin test runner')
-    parser.add_argument('tests_path', metavar='DIRECTORY', nargs='?', default='.',
+    parser.add_argument('tests_path', metavar='DIRECTORY', nargs='?', default=None,
                         help='root directory containing tests')
     parser.add_argument('--config', '-c', dest='config',
                         help='path to config file')
