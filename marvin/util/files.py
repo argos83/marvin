@@ -39,14 +39,14 @@ class FileFinder(object):
     """
     Recursively walks a directory looking for files that satisfy the given filter
     """
-    def __init__(self, name_matcher, search_path):
-        self._name_matcher = name_matcher
+    def __init__(self, search_path, filename_matcher=None):
+        self._filename_matcher = filename_matcher
         self._search_path = search_path
 
     def find_all(self):
         for dirpath, dirnames, filenames in os.walk(self._search_path):
             for filename in filenames:
-                if self._name_matcher(filename):
+                if not self._filename_matcher or self._filename_matcher(filename):
                     yield os.path.join(dirpath, filename)
 
             blacklist = [dn for dn in dirnames if dn.startswith(".")]
