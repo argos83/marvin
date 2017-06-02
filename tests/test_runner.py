@@ -4,7 +4,7 @@ from collections import namedtuple
 
 from marvin.runner.runner import Runner
 from marvin.runner.runtime_suite import default_config
-from marvin.data import YAMLDataProvider, JSONDataProvider, NullDataProvider
+from marvin.data import YAMLDataProvider, NullDataProvider
 
 from tests import resource as r, env_var
 
@@ -19,7 +19,7 @@ def test_suite_generation():
     collected = [(t.__name__, d.__class__, d.setup_data().get('name')) for (t, d) in Runner(options)._suite.tests()]
 
     assert ("VerifySomething", YAMLDataProvider, "verify_something.data1.yaml") in collected
-    assert ("VerifySomething", JSONDataProvider, "verify_something.json") in collected
+    assert ("VerifySomething", YAMLDataProvider, "verify_something.json") in collected
     assert ("AnotherCase", NullDataProvider, None) in collected
     assert len(collected) == 3
 
@@ -31,7 +31,7 @@ def test_tags_filtering():
     collected = [(t.__name__, d.__class__, d.setup_data().get('name')) for (t, d) in Runner(options)._suite.tests()]
 
     assert ("VerifySomething", YAMLDataProvider, "verify_something.data1.yaml") in collected
-    assert ("VerifySomething", JSONDataProvider, "verify_something.json") in collected
+    assert ("VerifySomething", YAMLDataProvider, "verify_something.json") in collected
     assert len(collected) == 2
 
     options = build_options(tests_path=r('runner/scenario1'), config=None,

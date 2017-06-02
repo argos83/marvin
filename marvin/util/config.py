@@ -1,6 +1,5 @@
 import keyword
 import os.path
-import json
 import yaml
 
 
@@ -20,9 +19,7 @@ class Config(object):
         self.set(namespace or name, value)
 
     def _load_file(self, fh, file_type):
-        if file_type == '.json':
-            return json.load(fh)
-        if file_type in ['.yaml', '.yml']:
+        if file_type in ['.yaml', '.yml', '.json']:
             return yaml.load(fh)
         else:
             raise ValueError("Unsupported config extension: '%s'" % file_type)
