@@ -1,0 +1,10 @@
+{
+    "setup": {"name": "verify_something.json"},
+
+    "iterations": [
+        {"iteration_data": 1},
+        {"iteration_data": 2}
+    ],
+
+    "tear_down": {}
+}

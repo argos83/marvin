@@ -1,0 +1,9 @@
+tests_path: "scenario1/"
+
+filter:
+  with_tags:
+    - include-this
+  without_tags:
+    - exclude-this
+
+some_setting: some value

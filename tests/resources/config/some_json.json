@@ -1,0 +1,5 @@
+{
+  "important_setting": 42,
+  "this_field": "some_value",
+  "another_field": [true]
+}

@@ -136,7 +136,7 @@ class EventLogger(object):
         for test in self._suite_status:
             status = self._colored_status(test["test_status"])
             self._p("\n%s - %s", test["test_name"], status)
-            for status, value in test["iterations"].iteritems():
+            for status, value in test["iterations"].items():
                 self._p("%s%s: %i", self._indent, status, value)
 
     def _p(self, s, *args):

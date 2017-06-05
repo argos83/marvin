@@ -9,7 +9,7 @@ class WebsiteTitlesSuite(Suite):
 
     def tests(self):
         return [
-            (WebsiteTitles, JSONDataProvider("test_cases/website_title.json"))
+            (WebsiteTitles, JSONDataProvider("test_cases/website_titles.json"))
         ]
 
 

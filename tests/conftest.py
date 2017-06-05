@@ -13,3 +13,9 @@ def pytest_configure(config):
 def ctx():
     from tests.stubs import DummyContext
     return DummyContext()
+
+
+@pytest.fixture()
+def config():
+    from marvin.util.config import Config
+    return Config()

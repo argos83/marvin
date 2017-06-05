@@ -15,29 +15,31 @@ class TestRunner(object):
 
     def __init__(self, test_script, data_provider):
         self._test = test_script
-        self._data = data_provider or NullDataProvider()
+        self._data_provider = data_provider or NullDataProvider()
         self._status = None
         self._exceptions = []
         self._skip_iteration = False
         self._skip_teardown = False
 
     def execute(self):
-        test_started = TestStartedEvent(self._test, self._data)
+        test_started = TestStartedEvent(self._test, self._data_provider)
         self._test.publisher.notify(test_started)
 
         self._execute()
 
-        test_ended = TestEndedEvent(self._test, test_started.timestamp, self._status, self._exceptions)
+        test_ended = TestEndedEvent(self._test, self._data_provider,
+                                    test_started.timestamp, self._status, self._exceptions)
         self._test.publisher.notify(test_ended)
         self._test.ctx.sub_context_finished(self._status)
 
     def _execute(self):
-        self._do_block('setup', self._data.setup_data(), TestSetupStartedEvent, TestSetupEndedEvent)
+        self._do_block('setup', self._data_provider.setup_data(), TestSetupStartedEvent, TestSetupEndedEvent)
 
-        for it_data in self._data.iteration_data():
+        for it_data in self._data_provider.iteration_data():
             self._do_block('run', it_data, TestIterationStartedEvent, TestIterationEndedEvent)
 
-        self._do_block('tear_down', self._data.tear_down_data(), TestTearDownStartedEvent, TestTearDownEndedEvent)
+        self._do_block('tear_down', self._data_provider.tear_down_data(),
+                       TestTearDownStartedEvent, TestTearDownEndedEvent)
 
     def _do_block(self, block_type, data, started_event_class, ended_event_class):
         if self._should_skip_block(block_type):
@@ -45,7 +47,7 @@ class TestRunner(object):
 
         status = Status.PASS
         exception = NO_EXCEPTION
-        block_started = started_event_class(self._test, data)
+        block_started = started_event_class(self._test, self._data_provider, data)
         self._test.publisher.notify(block_started)
         try:
             getattr(self._test, block_type)(data)
@@ -57,7 +59,7 @@ class TestRunner(object):
             exception = sys.exc_info()
         finally:
             self._test.publisher.notify(
-                ended_event_class(self._test, block_started.timestamp, status, exception)
+                ended_event_class(self._test, self._data_provider, data, block_started.timestamp, status, exception)
             )
             if exception != NO_EXCEPTION:
                 self._exceptions.append(exception)

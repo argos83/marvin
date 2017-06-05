@@ -1,0 +1,21 @@
+{
+  "setup": {
+    "a_list": [1, 2],
+    "foo": "bar"
+  },
+
+  "iterations": [
+    {
+      "arg1": "iteration 1",
+      "arg2": true
+    },
+    {
+      "arg1": "iteration 2",
+      "arg2": false
+    }
+  ],
+
+  "tear_down": {
+    "foo": "baz"
+  }
+}

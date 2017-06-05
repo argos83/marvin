@@ -13,14 +13,19 @@ class DataProvider(object):
         """
         self._source_id = source_id
 
+    @classmethod
+    def handles(cls, source_id):
+        """Returns true if this data provider supports loading the give data source id"""
+        raise NotImplementedError("Method must be redefined in %s" % cls.__name__)
+
     def setup_data(self):
         """Returns a python object with the data to be passed to the 'setup' block of the Test Script"""
-        raise NotImplementedError("Method must be redefined")
+        raise NotImplementedError("Method must be redefined in %s" % self.__class__.__name__)
 
     def iteration_data(self):
         """Returns python object's as a list or generator for each of the iterations"""
-        raise NotImplementedError("Method must be redefined")
+        raise NotImplementedError("Method must be redefined in %s" % self.__class__.__name__)
 
     def tear_down_data(self):
         """Returns a python object with the data to be passed to the 'tear_down' block of the Test Script"""
-        raise NotImplementedError("Method must be redefined")
+        raise NotImplementedError("Method must be redefined %s" % self.__class__.__name__)

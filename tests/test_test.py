@@ -13,6 +13,10 @@ ALL_TEST_EVENTS = [E.TEST_STARTED,
 
 ALL_END_EVENTS = [E.TEST_SETUP_ENDED, E.TEST_ITERATION_ENDED, E.TEST_TEARDOWN_ENDED, E.TEST_ENDED]
 
+ALL_BLOCK_START_EVENTS = [E.TEST_SETUP_STARTED,  E.TEST_ITERATION_STARTED, E.TEST_TEARDOWN_STARTED]
+
+ALL_BLOCK_END_EVENTS = [E.TEST_SETUP_ENDED, E.TEST_ITERATION_ENDED, E.TEST_TEARDOWN_ENDED]
+
 
 def test_test_basic(ctx):
     """Verify a basic test operation"""
@@ -21,15 +25,29 @@ def test_test_basic(ctx):
 
 def test_test_events(ctx):
     observer = ctx.observer(*ALL_TEST_EVENTS)
-
+    d = DummyData()
     t = ctx.test(DummyTest)
-    t.execute()
+    t.execute(d)
 
     triggered_events = [e.event_type for e in observer.events]
 
     assert triggered_events == ALL_TEST_EVENTS
     assert ctx.last_reported_status == Status.PASS
     assert all(e.test_script == t for e in observer.events)
+    assert all(e.data_provider == d for e in observer.events)
+    assert all(e.duration == e.timestamp - e.start_time
+               for e in observer.events if e.event_type in ALL_END_EVENTS)
+
+
+def test_access_data_in_block_events(ctx):
+    observer = ctx.observer(*(ALL_BLOCK_START_EVENTS + ALL_BLOCK_END_EVENTS))
+    observer.hook(lambda e: e.data['foo'].append('bar'), *ALL_BLOCK_START_EVENTS)
+
+    ctx.test(DummyTest).execute(DummyData()
+                                .with_setup(foo=[])
+                                .with_iteration(foo=[])
+                                .with_tear_down(foo=[]))
+    assert all(e.data['foo'] == ['bar'] for e in observer.events)
 
 
 def test_unimplemented_methods(ctx):
@@ -54,7 +72,7 @@ def test_unimplemented_methods(ctx):
 def test_fail_setup_skips_iteration_but_not_tear_down(ctx):
     observer = ctx.observer(*ALL_TEST_EVENTS)
 
-    ctx.test(DummyTest).execute(DummyData().with_setup_data(fail='kaput'))
+    ctx.test(DummyTest).execute(DummyData().with_setup(fail='kaput'))
 
     triggered_events = [e.event_type for e in observer.events]
     assert triggered_events == [E.TEST_STARTED,
@@ -74,7 +92,7 @@ def test_fail_setup_skips_iteration_but_not_tear_down(ctx):
 def test_skip_setup_skips_everything(ctx):
     observer = ctx.observer(*ALL_TEST_EVENTS)
 
-    ctx.test(DummyTest).execute(DummyData().with_setup_data(skip='move on'))
+    ctx.test(DummyTest).execute(DummyData().with_setup(skip='move on'))
 
     triggered_events = [e.event_type for e in observer.events]
     assert triggered_events == [E.TEST_STARTED,
@@ -170,3 +188,16 @@ def test_can_run_steps(ctx):
 
     ctx.test(SimpleTest).execute()
     assert observer.last_event.step.name == 'DummyStep'
+
+
+def test_has_access_to_config(ctx):
+    ctx.cfg.set('answer', 40)
+
+    class SimpleTest(marvin.TestScript):
+        def run(self, data):
+            self.cfg.set('answer', self.cfg.answer + 1)
+            with self.step(DummyStep).do() as (step, _result):
+                step.cfg.set('answer', step.cfg.answer + 1)
+
+    ctx.test(SimpleTest).execute()
+    assert ctx.cfg.answer == 42

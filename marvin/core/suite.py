@@ -26,6 +26,7 @@ class Suite(Context, TestRunningContext, Reportable):
         status = self._execute()
 
         self.publisher.notify(SuiteEndedEvent(self, start_event.timestamp, status))
+        return status
 
     def tests(self):
         """To be redefined by specific Suite implementations. The method must return

@@ -18,14 +18,6 @@ class EventType(object):
     STEP_ENDED = 120
     STEP_SKIPPED = 130
 
-    ALL = [
-        SUITE_STARTED, SUITE_ENDED,
-        TEST_STARTED, TEST_ENDED,
-        TEST_ITERATION_STARTED, TEST_ITERATION_ENDED,
-        TEST_TEARDOWN_STARTED, TEST_TEARDOWN_ENDED,
-        STEP_STARTED, STEP_ENDED, STEP_SKIPPED
-    ]
-
 
 class Event(object):
     """Abstract root Event class"""
@@ -91,23 +83,15 @@ class SuiteEndedEvent(SuiteEvent):
 class TestEvent(Event):
     """Abstract class for all TestScript related events"""
 
-    def __init__(self, test_script):
+    def __init__(self, test_script, data_provider):
         super(TestEvent, self).__init__()
         self._test_script = test_script
+        self._data_provider = data_provider
 
     @property
     def test_script(self):
         """The TestScript instance associated with this event"""
         return self._test_script
-
-
-class TestStartedEvent(TestEvent):
-    """Triggered when a test is about to start it's execution"""
-    event_type = EventType.TEST_STARTED
-
-    def __init__(self, test_script, data_provider):
-        super(TestStartedEvent, self).__init__(test_script)
-        self._data_provider = data_provider
 
     @property
     def data_provider(self):
@@ -115,12 +99,17 @@ class TestStartedEvent(TestEvent):
         return self._data_provider
 
 
+class TestStartedEvent(TestEvent):
+    """Triggered when a test is about to start it's execution"""
+    event_type = EventType.TEST_STARTED
+
+
 class TestEndedEvent(TestEvent):
     """Triggered when a test has finished it's execution"""
     event_type = EventType.TEST_ENDED
 
-    def __init__(self, test_script, start_time, status, exceptions):
-        super(TestEndedEvent, self).__init__(test_script)
+    def __init__(self, test_script, data_provider, start_time, status, exceptions):
+        super(TestEndedEvent, self).__init__(test_script, data_provider)
         self._start_time = start_time
         self._status = status
         self._exceptions = exceptions
@@ -153,8 +142,8 @@ class TestEndedEvent(TestEvent):
 class TestBlockStartedEvent(TestEvent):
     """Abstract class for test's block started: setup, iteration(s), tear down"""
 
-    def __init__(self, test_script, data):
-        super(TestBlockStartedEvent, self).__init__(test_script)
+    def __init__(self, test_script, data_provider, data):
+        super(TestBlockStartedEvent, self).__init__(test_script, data_provider)
         self._data = data
 
     @property
@@ -166,12 +155,18 @@ class TestBlockStartedEvent(TestEvent):
 class TestBlockEndedEvent(TestEvent):
     """Abstract class for test's block ended: setup, iteration(s), tear down"""
 
-    def __init__(self, test_script, start_time, status, exception):
-        super(TestBlockEndedEvent, self).__init__(test_script)
+    def __init__(self, test_script, data_provider, data, start_time, status, exception):
+        super(TestBlockEndedEvent, self).__init__(test_script, data_provider)
+        self._data = data
         self._start_time = start_time
         self._status = status
         self._exception = exception
         self._duration = self.timestamp - start_time
+
+    @property
+    def data(self):
+        """the data used by this test block"""
+        return self._data
 
     @property
     def start_time(self):
