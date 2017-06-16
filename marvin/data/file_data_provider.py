@@ -27,6 +27,9 @@ class FileDataProvider(DataProvider):
         _, ext = os.path.splitext(source_id)
         return ext and ext[1:].lower() in cls.supported_extensions()
 
+    def meta(self):
+        return self._data.get('meta', {})
+
     def setup_data(self):
         return self._data.get('setup', {})
 

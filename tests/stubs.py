@@ -58,10 +58,15 @@ class DummyData(DataProvider):
     def __init__(self):
         super(DummyData, self).__init__(None)
         self._data = {
+            'meta': {},
             'setup': {},
             'iterations': [],
             'tear_down': {}
         }
+
+    # Override
+    def meta(self):
+        return self._data['meta']
 
     # Override
     def setup_data(self):
@@ -74,6 +79,10 @@ class DummyData(DataProvider):
     # Override
     def tear_down_data(self):
         return self._data['tear_down']
+
+    def with_meta(self, **kwargs):
+        self._data['meta'] = kwargs
+        return self
 
     def with_setup(self, **kwargs):
         self._data['setup'] = kwargs

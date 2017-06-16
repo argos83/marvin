@@ -80,7 +80,7 @@ class EventLogger(object):
 
     def on_step_started(self, event):
         step = event.step
-        tags = "(" + ", ".join(step.tags) + (")") if len(step.tags) > 0 else ""
+        tags = "(" + ", ".join(step.tags) + ")" if step.tags else ""
 
         self._p("-" * 64)
         self._p("%s%s: %s %s", self._indent * step.level, step.name, step.description, tags)
@@ -92,12 +92,7 @@ class EventLogger(object):
         self._p("%s[%s] %s (%d ms)", self._indent * step.level, status, step.name, event.duration)
 
     def on_test_started(self, event):
-        # Check if the test's title is defined on the setup for the summary
-        # report. If not, we use the name of test script
         test_name = event.test_script.name
-        setup_data = event.data_provider.setup_data()
-        if setup_data.get("test_report_title"):
-            test_name = setup_data["test_report_title"]
 
         self._current_status = {
             "test_name": test_name,

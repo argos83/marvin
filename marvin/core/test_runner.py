@@ -1,3 +1,4 @@
+import collections
 import sys
 
 from marvin.data.data_providers.null_data_provider import NullDataProvider
@@ -22,6 +23,7 @@ class TestRunner(object):
         self._skip_teardown = False
 
     def execute(self):
+        self._test_meta_override()
         test_started = TestStartedEvent(self._test, self._data_provider)
         self._test.publisher.notify(test_started)
 
@@ -79,3 +81,14 @@ class TestRunner(object):
         if block_type == 'run':
             return self._skip_iteration
         return False
+
+    def _test_meta_override(self):
+        meta = self._data_provider.meta()
+        if not isinstance(meta, dict):
+            return
+        if 'name' in meta:
+            self._test.name = meta['name']
+        if 'description' in meta:
+            self._test.description = meta['description']
+        if 'tags' in meta and isinstance(meta['tags'], collections.Sequence):
+            self._test.tag(*meta['tags'])
