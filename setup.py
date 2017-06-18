@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
-setup(name='marvin',
-      version='0.1.0',
+setup(name='marvin-test',
+      version='0.1.0.dev1',
       description='Marvin - Automation Framework',
       url='https://github.com/argos83/marvin',
       author='Sebastian Tello',
