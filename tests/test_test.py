@@ -179,6 +179,19 @@ def test_tests_are_reportable(ctx):
     assert test.tags == {'tags', 'and', 'magic'}
 
 
+def test_test_meta_extended_from_data(ctx):
+    class SimpleTest(marvin.TestScript):
+        """Test description"""
+        TAGS = ['a', 'few', 'tags']
+
+    test = ctx.test(SimpleTest)
+    test.execute(DummyData().with_meta(name='New Name', description='New description', tags=['more', 'tags', 4]))
+
+    assert test.name == 'New Name'
+    assert test.description == 'New description'
+    assert test.tags == {'a', 'few', 'tags', 'more', '4'}
+
+
 def test_can_run_steps(ctx):
     observer = ctx.observer(E.STEP_ENDED)
 

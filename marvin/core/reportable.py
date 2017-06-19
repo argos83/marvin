@@ -9,20 +9,26 @@ class Reportable(object):
     def __init__(self):
         self._runtime_tags = set()
         self._removed_tags = set()
-
-    @property
-    def description(self):
-        """Description property for this instance"""
-        default = "No description"
-        if self.__class__.__doc__:
-            default = self.__class__.__doc__.strip()
-
-        return getattr(self, 'DESCRIPTION', default)
+        self._name = getattr(self, 'NAME', self.__class__.__name__)
+        self._description = getattr(self, 'DESCRIPTION', self._default_description())
 
     @property
     def name(self):
         """Name property for this instance"""
-        return getattr(self, 'NAME', self.__class__.__name__)
+        return self._name
+
+    @name.setter
+    def name(self, new_name):
+        self._name = str(new_name)
+
+    @property
+    def description(self):
+        """Description property for this instance"""
+        return self._description
+
+    @description.setter
+    def description(self, new_description):
+        self._description = str(new_description)
 
     @property
     def tags(self):
@@ -32,11 +38,11 @@ class Reportable(object):
 
     def tag(self, *tags):
         """Dynamically add tags to this instance"""
-        self._runtime_tags |= set(tags)
+        self._runtime_tags |= set(str(tag) for tag in tags)
 
     def untag(self, *tags):
         """Remove tags (instance or class) for this instance"""
-        self._removed_tags |= set(tags)
+        self._removed_tags |= set(str(tag) for tag in tags)
 
     @classmethod
     def class_tags(cls):
@@ -47,3 +53,8 @@ class Reportable(object):
                 tags |= base_class.class_tags()
                 break
         return tags
+
+    def _default_description(self):
+        if self.__class__.__doc__:
+            return self.__class__.__doc__.strip()
+        return 'No description'

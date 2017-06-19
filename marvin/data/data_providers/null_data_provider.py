@@ -15,6 +15,9 @@ class NullDataProvider(DataProvider):
     def __init__(self, *_args):
         super(NullDataProvider, self).__init__(None)
 
+    def meta(self):
+        return {}
+
     def setup_data(self):
         return {}
 
