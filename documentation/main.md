@@ -10,7 +10,11 @@ This is the main `Marvin` documentation.
 
 `Marvin` test scripts are data-driven. This means that the test scripts only have the logic of the test and this logic only make sense when data is applied. Each of them have to have a `Data Provider` file associated, which will inject the data in the test script when it's executed. For now, we are just going to say that the `Test Script` and `Data Provider` files should have the same name (one a python file and the other a YAML/JSON file) and that they should be on the same folder, but later we are going to explain the different possibilities we have for the `Test Scripts` names and `Data Provider` file names.
 
+<<<<<<< HEAD
 `Marvin`'s built-in data providers are YAML and JSON, so you can create data files with these two formats. But if you need your own data provider, you can create one. Check [Data Providers](documentation/data_providers.md) documentation.
+=======
+`Marvin`'s built-in data providers are YAML and JSON, so you can create data files with these two formats. But if you need you own data provider, you can create one. Check [Data Providers](documentation/data_providers.md) documentation.
+>>>>>>> 6aebaa8b97b46773ee45e14acc54ae17120026ee
 
 ## Directory Structure
 
@@ -57,12 +61,20 @@ Inside this methods is where the steps are called. For example, in the `setup` m
 
 ### Data Files
 
+<<<<<<< HEAD
 Like we said, data files are known as `Data Providers` and `Marvin` has support for YAML/JSON format automatically. But if you need your own data provider, you can create one. Check [Data Providers](documentation/data_providers.md) documentation.
+=======
+Like we said, data files are known as `Data Providers` and `Marvin` has support for YAML/JSON format automatically. But if you need you own data provider, you can create one. Check [Data Providers](documentation/data_providers.md) documentation.
+>>>>>>> 6aebaa8b97b46773ee45e14acc54ae17120026ee
 
 Here is a example:
 
 ```yaml
+<<<<<<< HEAD
 # test_cases/example_test.yaml
+=======
+#example_test.yaml
+>>>>>>> 6aebaa8b97b46773ee45e14acc54ae17120026ee
 setup:
   a_list: [1, 2]
   foo: bar
@@ -134,7 +146,11 @@ ba
 
 `Steps` are one of the most important things on `Marvin`. It's where the final logic of the tests takes place and when they are well designed, it could save you a lot of times when creating new `Test Scripts`.
 
+<<<<<<< HEAD
 To start with, here is a basic example of a `Step` on `Marvin`.:
+=======
+To start with, here is a basic example of a step:
+>>>>>>> 6aebaa8b97b46773ee45e14acc54ae17120026ee
 
 ```python
 from marvin import Step
@@ -149,6 +165,11 @@ class TestStep(Step):
       pass
 ```
 
+<<<<<<< HEAD
+=======
+That's the most basic template for a `Step` on `Marvin`.
+
+>>>>>>> 6aebaa8b97b46773ee45e14acc54ae17120026ee
 ### Steps Status
 
 Every `Step` by default returns `PASS` if no exception is thrown. Here is an example of a `Step` that throws an exception if a value received as parameter is odd or even and that way setting the status of it to `FAIL`:
@@ -271,8 +292,12 @@ When `Marvin` is executed, it tries to read configuration values from a config f
 ```
 4. Then, it checks for variables that can be overriden on the command line like `test_path`, `with_tags` and `without_tags`
 
+<<<<<<< HEAD
 As you can see, there are five possible values that you can set:
 
 **tests_path**: Directory where test script are saved.
 **filter**: You can setup filter by defaults instead of typing them on the `cli`
 **hook_module**: Python file that you want to hoop up to the test execution. Check more information on the [Custom Event Loggers](documentation/custom_events_logger.md) page.
+=======
+## Custom Event Loggers
+>>>>>>> 6aebaa8b97b46773ee45e14acc54ae17120026ee
