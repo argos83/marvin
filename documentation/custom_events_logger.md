@@ -2,7 +2,7 @@
 
 `Marvin` has a built-in event logger which is the output you see when you execute test cases, but you can add your custom `Events Logger` to handle test information and send it to a database, to a `Grafana` server or whatever you want.
 
-If you don't want to read this, you can check it on the [examples](examples) folder.
+If you don't want to read this, you can check it on the [examples](../examples) folder.
 
 ## Setting Up
 
