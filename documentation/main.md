@@ -294,6 +294,6 @@ When `Marvin` is executed, it tries to read configuration values from a config f
 
 As you can see, there are five possible values that you can set:
 
-**tests_path**: Directory where test script are saved.
-**filter**: You can setup filter by defaults instead of typing them on the `cli`
-**hook_module**: Python file that you want to hoop up to the test execution. Check more information on the [Custom Event Loggers](documentation/custom_events_logger.md) page.
+* **tests_path**: Directory where test script are saved.
+* **filter**: You can setup filter by defaults instead of typing them on the `cli`
+* **hook_module**: Python file that you want to hoop up to the test execution. Check more information on the [Custom Event Loggers](documentation/custom_events_logger.md) page.
