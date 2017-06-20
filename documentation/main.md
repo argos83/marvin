@@ -292,12 +292,8 @@ When `Marvin` is executed, it tries to read configuration values from a config f
 ```
 4. Then, it checks for variables that can be overriden on the command line like `test_path`, `with_tags` and `without_tags`
 
-<<<<<<< HEAD
 As you can see, there are five possible values that you can set:
 
 **tests_path**: Directory where test script are saved.
 **filter**: You can setup filter by defaults instead of typing them on the `cli`
 **hook_module**: Python file that you want to hoop up to the test execution. Check more information on the [Custom Event Loggers](documentation/custom_events_logger.md) page.
-=======
-## Custom Event Loggers
->>>>>>> 6aebaa8b97b46773ee45e14acc54ae17120026ee
