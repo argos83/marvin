@@ -17,8 +17,5 @@ jobs:
   include:
     - stage: semantic release
       python: "3.5"
-      script:
-      - git config --global user.name "semantic-release"
-      - git config --global user.email "semantic-release@travis"
-      - pip install python-semantic-release
-      - semantic-release publish
+      script: ./bin/semantic-release.sh
+
