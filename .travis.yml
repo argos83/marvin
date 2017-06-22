@@ -12,3 +12,9 @@ before_script:
 
 script:
   - tox -e $(echo py$TRAVIS_PYTHON_VERSION | tr -d .)
+
+after_success:
+- git config --global user.name "semantic-release"
+- git config --global user.email "semantic-release@travis"
+- pip install python-semantic-release
+- semantic-release publish
