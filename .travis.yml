@@ -12,3 +12,10 @@ before_script:
 
 script:
   - tox -e $(echo py$TRAVIS_PYTHON_VERSION | tr -d .)
+
+jobs:
+  include:
+    - stage: semantic release
+      python: "3.5"
+      script: ./bin/semantic-release.sh
+
