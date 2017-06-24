@@ -12,7 +12,7 @@ script:
   - flake8 marvin tests
   - pytest --cov=marvin tests/
 
-after_sucess:
+after_script:
   - codeclimate-test-reporter
 
 jobs:
