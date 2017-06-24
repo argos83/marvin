@@ -4,18 +4,21 @@ python:
   - "3.5"
 
 install:
-  - pip install tox
-  - pip install flake8
+  - pip install -r requirements.txt
+  - pip install -r dev-requirements.txt
 
 before_script:
-  - flake8 marvin tests
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
 
 script:
-  - tox -e $(echo py$TRAVIS_PYTHON_VERSION | tr -d .)
+  - flake8 marvin tests
+  - pytest --cov=marvin tests/
+  - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT; fi
 
 jobs:
   include:
     - stage: semantic release
       python: "3.5"
-      script: ./bin/semantic-release.sh
+      script: ./bin/semantic-release
 
