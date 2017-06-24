@@ -14,7 +14,7 @@ before_script:
 script:
   - flake8 marvin tests
   - pytest --cov=marvin tests/
-  - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT; fi
+  - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then ./cc-test-reporter after-build -t coverage.py --exit-code $TRAVIS_TEST_RESULT; fi
 
 jobs:
   include:
