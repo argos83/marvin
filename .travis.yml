@@ -6,19 +6,17 @@ python:
 install:
   - pip install -r requirements.txt
   - pip install -r dev-requirements.txt
-
-before_script:
-  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-  - chmod +x ./cc-test-reporter
+  - pip install codeclimate-test-reporter
 
 script:
   - flake8 marvin tests
   - pytest --cov=marvin tests/
-  - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then ./cc-test-reporter after-build -t coverage.py --exit-code $TRAVIS_TEST_RESULT; fi
+
+after_sucess:
+  - codeclimate-test-reporter
 
 jobs:
   include:
     - stage: semantic release
       python: "3.5"
       script: ./bin/semantic-release
-
