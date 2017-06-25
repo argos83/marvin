@@ -74,8 +74,8 @@ Marvin uses [flake8][] to lint both Marvin and tests codebases. Execute `flake8 
 The main documentation is written in [Markdown][]. Marvin uses
 [ReadTheDocs][] to build and publish the documentation:
 
-- [https://marvin.readthedocs.io](https://marvin.readthedocs.io) - preferred long URL
-- [http://marvin.rtfd.org](http://marvin.rtfd.org) - preferred short URL
+- [https://marvin-test.readthedocs.io](https://marvin-test.readthedocs.io) - preferred long URL
+- [http://marvin-test.rtfd.org](http://marvin-test.rtfd.org) - preferred short URL
 
 Source of the documentation can be found in the [docs][] directory.
 
