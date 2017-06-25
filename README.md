@@ -49,4 +49,4 @@ optional arguments:
 ```
 ## Documentation
 
-Checkout the full [documentation](documentation/main.md).
+Checkout the full [documentation](docs/main.md).
