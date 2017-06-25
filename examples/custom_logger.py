@@ -11,7 +11,7 @@ class CustomLogger(object):
         publisher.subscribe(self.on_test_ended, EventType.TEST_ENDED)
 
     def on_test_started(self, event):
-        print "#### CUSTOMER LOGGER - TEST STARTING ####"
+        print("#### CUSTOM LOGGER - TEST STARTING ####")
 
     def on_test_ended(self, event):
-        print "#### CUSTOMER LOGGER- TEST ENDING ####"
+        print("#### CUSTOM LOGGER- TEST ENDING ####")
