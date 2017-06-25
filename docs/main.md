@@ -106,16 +106,16 @@ class CreateUser(TestScript):
     NAME = "Create User"
 
     def setup(self, data):
-        print "Using username {}".format(data["username"])
-        print "Using password {}".format(data["password"])
+        print("Using username {}".format(data["username"]))
+        print("Using password {}".format(data["password"]))
 
     def run(self, data):
-        print "Creating user '{}' as '{}'".format(
+        print("Creating user '{}' as '{}'".format(
           data["create_user"]["name"], data["create_user"]["account_type"]
-        )
+        ))
 
     def tear_down(self, _data):
-        print "Should we logout? {}".format(data["logout"])
+        print("Should we logout? {}".format(data["logout"]))
 ```
 
 The output will be something like this:
