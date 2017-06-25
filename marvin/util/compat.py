@@ -30,6 +30,14 @@ def import_module(module_path, module_name):
     return mod
 
 
+def string_io(*args, **kwargs):
+    if IS_PYTHON_3:
+        from io import StringIO
+    else:
+        from StringIO import StringIO
+    return StringIO(*args, **kwargs)
+
+
 def urllib_mod():
     if IS_PYTHON_3:
         import urllib.request
