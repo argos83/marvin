@@ -1,4 +1,4 @@
-# Custom Events logger
+# Custom Events Logger and Plugins
 
 `Marvin` has a built-in event logger which is the output you see when you execute test cases, but you can add your custom `Events Logger` to handle test information and send it to a database, to a `Grafana` server or whatever you want.
 
@@ -71,10 +71,10 @@ You use the `subscribe` method on the `publisher` object to link a method with a
 
 You can check the full event list and their signatures below.
 
-To access the `config` object, you use the following syntax `cfg._data["marvin"]`. For example, if you want to know the path of the tests that are being executed, you would use the following:
+To access the `config` object, you use the following syntax `cfg.marvin`. For example, if you want to know the path of the tests that are being executed, you would use the following:
 
 ```python
-cfg._data["marvin"]["tests_path"]
+cfg.marvin["tests_path"]
 ```
 
 ## List Of Events

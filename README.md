@@ -10,7 +10,7 @@ Just like any other `PyPi` package, run the following command:
 > pip install marvin-test
 ```
 
-To check if it's installed correctly, run the `marvin --help` command and it should give you something like this:
+To check if it's installed correctly, run the `marvin --help` command. The output should look like this:
 
 ```
 $ marvin --help
