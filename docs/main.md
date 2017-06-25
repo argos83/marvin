@@ -4,7 +4,7 @@ This is the main `Marvin` documentation.
 
 ## What is Marvin?
 
-`Marvin` is a data-driven automation framework. It's main purpose is to automate test cases on a software development process but it can also be used on any repetitive task that you need to automate.
+`Marvin` is a data-driven framework designed for integration/system/E2E testing. Most available testing frameworks are designed for unit testing, and don't provide enough tooling to code, track, and report what occurs within a single test case, since there's no need to do so for unit tests.
 
 ## Data-driven framework
 
@@ -197,10 +197,10 @@ from marvin import Step
 from utils.db_connection import CheckDBConnection
 
 
-class TestStep(Step):
-    """Example for a simple step"""
+class ConnectToDatabase(Step):
+    """Establishes a connection with the database"""
 
-    NAME = "Test Step"
+    NAME = "Connect To Database"
 
     def run(self, db, username, password):
       if CheckDBConnection(db, username, password):
