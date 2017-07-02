@@ -1,3 +1,9 @@
+[![PyPI version](https://badge.fury.io/py/marvin-test.svg)](https://badge.fury.io/py/marvin-test)
+[![docs](https://readthedocs.org/projects/marvin-test/badge/?version=latest)](https://marvin-test.readthedocs.io)
+[![Build Status](https://travis-ci.org/argos83/marvin.svg?branch=master)](https://travis-ci.org/argos83/marvin)
+[![Code Climate](https://codeclimate.com/github/argos83/marvin/badges/gpa.svg)](https://codeclimate.com/github/argos83/marvin)
+[![Test Coverage](https://codeclimate.com/github/argos83/marvin/badges/coverage.svg)](https://codeclimate.com/github/argos83/marvin/coverage)
+
 # Marvin - Python Test Automation Framework
 
 `Marvin` is a data-driven framework designed for integration/system/E2E testing.
