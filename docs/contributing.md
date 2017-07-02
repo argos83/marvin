@@ -77,13 +77,19 @@ Marvin uses [flake8][] to lint both Marvin and tests codebases. Execute `flake8 
 
 ### Documentation
 
-The main documentation is written in [Markdown][]. Marvin uses
+The main documentation is written in [Markdown][] using [MkDocs]. Marvin uses
 [ReadTheDocs][] to build and publish the documentation:
 
 - [https://marvin-test.readthedocs.io](https://marvin-test.readthedocs.io) - preferred long URL
 - [http://marvin-test.rtfd.org](http://marvin-test.rtfd.org) - preferred short URL
 
-Source of the documentation can be found in the [docs][] directory.
+Source of the documentation can be found in the [docs][] directory. To run a live preview of
+the documentation execute:
+
+```
+mkdocs serve
+```
+
 
 #### Note
 
@@ -112,6 +118,7 @@ will be generated. You can find it at `build/coverage/index.html`.
 [Pypi]: https://pypi.python.org/pypi
 [CodeClimate]: https://codeclimate.com/github/argos83/marvin
 [Markdown]: https://en.wikipedia.org/wiki/Markdown
+[MkDocs]: http://www.mkdocs.org/
 [ReadTheDocs]: https://readthedocs.org/
 [test coverage]: https://codeclimate.com/github/argos83/marvin
 [Semantic Release]: https://github.com/relekang/python-semantic-release

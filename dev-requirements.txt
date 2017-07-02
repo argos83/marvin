@@ -2,5 +2,6 @@ flake8==3.3.0
 pytest==3.0.6
 coverage>=4.0,<4.4
 pytest-cov==2.4.0
+mkdocs==0.16.3
 tox==2.6.0
 tox-pyenv==1.0.3
