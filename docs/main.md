@@ -1,6 +1,3 @@
-# Documentation
-
-This is the main `Marvin` documentation.
 
 ## What is Marvin?
 
@@ -237,7 +234,7 @@ class CreateUser(TestScript):
         ...
 ```
 
-## Running Marvin (cli)
+## Running Marvin (CLI)
 
 To execute `Marvin`, just run the following command:
 
@@ -251,7 +248,7 @@ So, if you have a directory called `test_cases` you would execute them like this
 > marvin test_cases
 ```
 
-### Arguments
+### CLI Arguments
 
 There are a few arguments you can use to customize the execution.
 

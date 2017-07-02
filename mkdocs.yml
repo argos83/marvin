@@ -1,0 +1,10 @@
+site_name: Marvin
+pages:
+  - Home: index.md
+  - Documentation: main.md
+  - Advanced:
+    - Custom events loggers and plugins: custom_events_logger.md
+  - Contributing: contributing.md
+
+theme: readthedocs
+repo_url: https://github.com/argos83/marvin/
