@@ -6,6 +6,7 @@ from colorama import Fore, Back
 import marvin.util.files
 from marvin.core.status import Status
 from marvin.report import EventType
+from marvin.exceptions import ContextSkippedException
 
 
 COLORS = {
@@ -86,6 +87,11 @@ class EventLogger(object):
         self._p("%s%s: %s %s", self._indent * step.level, step.name, step.description, tags)
 
     def on_step_ended(self, event):
+        if event.exception[2] is not None:
+            if event.exception[0] == ContextSkippedException:
+                self._p("%sSKIPPING REASON: %s", self._indent, event.exception[1])
+            else:
+                self._p(" ".join(traceback.format_tb(event.exception[2])))
         step = event.step
         status = self._colored_status(event.status)
 
@@ -131,8 +137,9 @@ class EventLogger(object):
         for test in self._suite_status:
             status = self._colored_status(test["test_status"])
             self._p("\n%s - %s", test["test_name"], status)
+            self._p("%sIterations:", self._indent)
             for status, value in test["iterations"].items():
-                self._p("%s%s: %i", self._indent, status, value)
+                self._p("%s%s: %i", (self._indent * 2), status, value)
 
     def _p(self, s, *args):
         self._o.write(s % args + "\n")
