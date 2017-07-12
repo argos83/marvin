@@ -6,6 +6,7 @@ from colorama import Fore, Back
 import marvin.util.files
 from marvin.core.status import Status
 from marvin.report import EventType
+from marvin.exceptions import ContextSkippedException
 
 
 COLORS = {
@@ -34,12 +35,22 @@ class EventLogger(object):
         publisher.subscribe(self.on_step_ended, EventType.STEP_ENDED)
         publisher.subscribe(self.on_test_started, EventType.TEST_STARTED)
         publisher.subscribe(self.on_test_ended, EventType.TEST_ENDED)
-        publisher.subscribe(self.on_setup_started, EventType.TEST_SETUP_STARTED)
+        publisher.subscribe(
+            self.on_setup_started, EventType.TEST_SETUP_STARTED
+        )
         publisher.subscribe(self.on_setup_ended, EventType.TEST_SETUP_ENDED)
-        publisher.subscribe(self.on_iteration_started, EventType.TEST_ITERATION_STARTED)
-        publisher.subscribe(self.on_iteration_ended, EventType.TEST_ITERATION_ENDED)
-        publisher.subscribe(self.on_teardown_started, EventType.TEST_TEARDOWN_STARTED)
-        publisher.subscribe(self.on_teardown_ended, EventType.TEST_TEARDOWN_ENDED)
+        publisher.subscribe(
+            self.on_iteration_started, EventType.TEST_ITERATION_STARTED
+        )
+        publisher.subscribe(
+            self.on_iteration_ended, EventType.TEST_ITERATION_ENDED
+        )
+        publisher.subscribe(
+            self.on_teardown_started, EventType.TEST_TEARDOWN_STARTED
+        )
+        publisher.subscribe(
+            self.on_teardown_ended, EventType.TEST_TEARDOWN_ENDED
+        )
         publisher.subscribe(self.on_suite_ended, EventType.SUITE_ENDED)
 
         self._indent = INDENT_CHAR * 2
@@ -83,13 +94,26 @@ class EventLogger(object):
         tags = "(" + ", ".join(step.tags) + ")" if step.tags else ""
 
         self._p("-" * 64)
-        self._p("%s%s: %s %s", self._indent * step.level, step.name, step.description, tags)
+        self._p(
+            "%s%s: %s %s", self._indent * step.level,
+            step.name, step.description, tags
+        )
 
     def on_step_ended(self, event):
+        if event.exception[2] is not None:
+            if event.exception[0] == ContextSkippedException:
+                self._p(
+                    "%sSKIPPING REASON: %s", self._indent, event.exception[1]
+                )
+            else:
+                self._p(" ".join(traceback.format_tb(event.exception[2])))
         step = event.step
         status = self._colored_status(event.status)
 
-        self._p("%s[%s] %s (%d ms)", self._indent * step.level, status, step.name, event.duration)
+        self._p(
+            "%s[%s] %s (%d ms)", self._indent * step.level,
+            status, step.name, event.duration
+        )
 
     def on_test_started(self, event):
         test_name = event.test_script.name
@@ -106,7 +130,10 @@ class EventLogger(object):
         test_script = event.test_script
         test_header = self._in_color('HEADER', 'TEST')
 
-        self._p("[%s] %s - %s", test_header, test_script.name, test_script.description)
+        self._p(
+            "[%s] %s - %s", test_header, test_script.name,
+            test_script.description
+        )
 
     def on_test_ended(self, event):
         test_script = event.test_script
@@ -131,8 +158,9 @@ class EventLogger(object):
         for test in self._suite_status:
             status = self._colored_status(test["test_status"])
             self._p("\n%s - %s", test["test_name"], status)
+            self._p("%sIterations:", self._indent)
             for status, value in test["iterations"].items():
-                self._p("%s%s: %i", self._indent, status, value)
+                self._p("%s%s: %i", (self._indent * 2), status, value)
 
     def _p(self, s, *args):
         self._o.write(s % args + "\n")
