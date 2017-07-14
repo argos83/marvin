@@ -4,6 +4,7 @@ if [ "$TRAVIS_PULL_REQUEST" = false ] && [ "$TRAVIS_BRANCH" = master ] ; then
     git config --global user.name "semantic-release"
     git config --global user.email "semantic-release@travis"
     pip install python-semantic-release
+    pip install -U twine
     semantic-release publish
 else
     echo "Branch: Skipping release"
