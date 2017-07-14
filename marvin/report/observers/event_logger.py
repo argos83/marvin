@@ -13,7 +13,7 @@ COLORS = {
     Status.FAIL: Fore.RED + '%s' + Fore.RESET,
     Status.SKIP: Fore.BLUE + Back.WHITE + '%s' + Back.RESET + Fore.RESET,
     'HEADER': Fore.CYAN + '%s' + Fore.RESET,
-    'BLOCK': Fore.MAGENTA + '%s' + Fore.RESET
+    'PHASE': Fore.MAGENTA + '%s' + Fore.RESET
 }
 
 INDENT_CHAR = " "
@@ -49,33 +49,33 @@ class EventLogger(object):
         self._current_status = {}
 
     def on_setup_started(self, event):
-        self._on_block_started('SETUP STARTED')
+        self._on_phase_started('SETUP STARTED')
 
     def on_setup_ended(self, event):
-        self._on_block_ended(event, 'SETUP FINISHED')
+        self._on_phase_ended(event, 'SETUP FINISHED')
 
     def on_iteration_started(self, event):
-        self._on_block_started('ITERATION STARTED')
+        self._on_phase_started('ITERATION STARTED')
 
     def on_iteration_ended(self, event):
         self._current_status["iterations"][event.status] += 1
-        self._on_block_ended(event, 'ITERATION FINISHED')
+        self._on_phase_ended(event, 'ITERATION FINISHED')
 
     def on_teardown_started(self, event):
-        self._on_block_started('TEARDOWN STARTED')
+        self._on_phase_started('TEARDOWN STARTED')
 
     def on_teardown_ended(self, event):
-        self._on_block_ended(event, 'TEARDOWN FINISHED')
+        self._on_phase_ended(event, 'TEARDOWN FINISHED')
 
-    def _on_block_started(self, title):
-        block_header = self._in_color('BLOCK', title)
+    def _on_phase_started(self, title):
+        phase_header = self._in_color('PHASE', title)
         self._indent = INDENT_CHAR * 4
-        self._p("%s[%s]", self._indent, block_header)
+        self._p("%s[%s]", self._indent, phase_header)
 
-    def _on_block_ended(self, event, title):
-        block_header = self._in_color('BLOCK', title)
+    def _on_phase_ended(self, event, title):
+        phase_header = self._in_color('PHASE', title)
         status = self._colored_status(event.status)
-        self._p("%s[%s - %s]", self._indent, block_header, status)
+        self._p("%s[%s - %s]", self._indent, phase_header, status)
         self._indent = INDENT_CHAR * 2
 
     def on_step_started(self, event):

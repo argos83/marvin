@@ -13,9 +13,9 @@ ALL_TEST_EVENTS = [E.TEST_STARTED,
 
 ALL_END_EVENTS = [E.TEST_SETUP_ENDED, E.TEST_ITERATION_ENDED, E.TEST_TEARDOWN_ENDED, E.TEST_ENDED]
 
-ALL_BLOCK_START_EVENTS = [E.TEST_SETUP_STARTED,  E.TEST_ITERATION_STARTED, E.TEST_TEARDOWN_STARTED]
+ALL_PHASE_START_EVENTS = [E.TEST_SETUP_STARTED, E.TEST_ITERATION_STARTED, E.TEST_TEARDOWN_STARTED]
 
-ALL_BLOCK_END_EVENTS = [E.TEST_SETUP_ENDED, E.TEST_ITERATION_ENDED, E.TEST_TEARDOWN_ENDED]
+ALL_PHASE_END_EVENTS = [E.TEST_SETUP_ENDED, E.TEST_ITERATION_ENDED, E.TEST_TEARDOWN_ENDED]
 
 
 def test_test_basic(ctx):
@@ -39,9 +39,9 @@ def test_test_events(ctx):
                for e in observer.events if e.event_type in ALL_END_EVENTS)
 
 
-def test_access_data_in_block_events(ctx):
-    observer = ctx.observer(*(ALL_BLOCK_START_EVENTS + ALL_BLOCK_END_EVENTS))
-    observer.hook(lambda e: e.data['foo'].append('bar'), *ALL_BLOCK_START_EVENTS)
+def test_access_data_in_phase_events(ctx):
+    observer = ctx.observer(*(ALL_PHASE_START_EVENTS + ALL_PHASE_END_EVENTS))
+    observer.hook(lambda e: e.data['foo'].append('bar'), *ALL_PHASE_START_EVENTS)
 
     ctx.test(DummyTest).execute(DummyData()
                                 .with_setup(foo=[])

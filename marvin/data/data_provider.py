@@ -28,7 +28,7 @@ class DataProvider(object):
         raise NotImplementedError("Method must be redefined in %s" % self.__class__.__name__)
 
     def setup_data(self):
-        """Returns a python object with the data to be passed to the 'setup' block of the Test Script"""
+        """Returns a python object with the data to be passed to the 'setup' phase of the Test Script"""
         raise NotImplementedError("Method must be redefined in %s" % self.__class__.__name__)
 
     def iteration_data(self):
@@ -36,5 +36,5 @@ class DataProvider(object):
         raise NotImplementedError("Method must be redefined in %s" % self.__class__.__name__)
 
     def tear_down_data(self):
-        """Returns a python object with the data to be passed to the 'tear_down' block of the Test Script"""
+        """Returns a python object with the data to be passed to the 'tear_down' phase of the Test Script"""
         raise NotImplementedError("Method must be redefined %s" % self.__class__.__name__)

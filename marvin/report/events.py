@@ -139,24 +139,24 @@ class TestEndedEvent(TestEvent):
         return self._exceptions
 
 
-class TestBlockStartedEvent(TestEvent):
-    """Abstract class for test's block started: setup, iteration(s), tear down"""
+class TestPhaseStartedEvent(TestEvent):
+    """Abstract class for test's phase started: setup, iteration(s), tear down"""
 
     def __init__(self, test_script, data_provider, data):
-        super(TestBlockStartedEvent, self).__init__(test_script, data_provider)
+        super(TestPhaseStartedEvent, self).__init__(test_script, data_provider)
         self._data = data
 
     @property
     def data(self):
-        """the data for this test block"""
+        """the data for this test phase"""
         return self._data
 
 
-class TestBlockEndedEvent(TestEvent):
-    """Abstract class for test's block ended: setup, iteration(s), tear down"""
+class TestPhaseEndedEvent(TestEvent):
+    """Abstract class for test's phase ended: setup, iteration(s), tear down"""
 
     def __init__(self, test_script, data_provider, data, start_time, status, exception):
-        super(TestBlockEndedEvent, self).__init__(test_script, data_provider)
+        super(TestPhaseEndedEvent, self).__init__(test_script, data_provider)
         self._data = data
         self._start_time = start_time
         self._status = status
@@ -165,59 +165,59 @@ class TestBlockEndedEvent(TestEvent):
 
     @property
     def data(self):
-        """the data used by this test block"""
+        """the data used by this test phase"""
         return self._data
 
     @property
     def start_time(self):
-        """The timestamp when the block started"""
+        """The timestamp when the phase started"""
         return self._start_time
 
     @property
     def duration(self):
-        """The block execution time in ms"""
+        """The phase execution time in ms"""
         return self._duration
 
     @property
     def status(self):
-        """The block's status"""
+        """The phase's status"""
         return self._status
 
     @property
     def exception(self):
         """
-        The exception raised by this block (if any) as a 3-tuple (like sys.exc_info)
+        The exception raised by this phase (if any) as a 3-tuple (like sys.exc_info)
         composed of (Exception type, Exception instance, Traceback instance)
         """
         return self._exception
 
 
-class TestSetupStartedEvent(TestBlockStartedEvent):
+class TestSetupStartedEvent(TestPhaseStartedEvent):
     """Triggered when a test's setup phase is about to start"""
     event_type = EventType.TEST_SETUP_STARTED
 
 
-class TestSetupEndedEvent(TestBlockEndedEvent):
+class TestSetupEndedEvent(TestPhaseEndedEvent):
     """Triggered when a test's setup phase has concluded"""
     event_type = EventType.TEST_SETUP_ENDED
 
 
-class TestIterationStartedEvent(TestBlockStartedEvent):
+class TestIterationStartedEvent(TestPhaseStartedEvent):
     """Triggered when a test's iteration is about to start"""
     event_type = EventType.TEST_ITERATION_STARTED
 
 
-class TestIterationEndedEvent(TestBlockEndedEvent):
+class TestIterationEndedEvent(TestPhaseEndedEvent):
     """Triggered when a test's iteration has concluded"""
     event_type = EventType.TEST_ITERATION_ENDED
 
 
-class TestTearDownStartedEvent(TestBlockStartedEvent):
+class TestTearDownStartedEvent(TestPhaseStartedEvent):
     """Triggered when a test's tear down phase is about to start"""
     event_type = EventType.TEST_TEARDOWN_STARTED
 
 
-class TestTearDownEndedEvent(TestBlockEndedEvent):
+class TestTearDownEndedEvent(TestPhaseEndedEvent):
     """Triggered when a test's tear down phase has concluded"""
     event_type = EventType.TEST_TEARDOWN_ENDED
 

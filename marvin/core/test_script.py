@@ -11,17 +11,17 @@ class TestScript(Context, StepRunningContext, Reportable):
     the 'setup' and 'tear_down' methods.
 
     The execution of a test consist of:
-        1. Execution of the 'setup' block
-        2. One or more executions of the 'run' block
-        3. Execution of the 'tear_down' block
+        1. Execution of the 'setup' phase
+        2. One or more executions of the 'run' phase
+        3. Execution of the 'tear_down' phase
 
     Each of these methods will be called passing as argument an object representing data
-    for the block (usually this will be a python dictionary). The data is obtained from a
+    for the phase (usually this will be a python dictionary). The data is obtained from a
     DataProvider object, which should be capable of providing data for:
-        * The 'setup' block.
-        * One or more iteration data for the 'run' block (so it's up to the data provider to
+        * The 'setup' phase.
+        * One or more iteration data for the 'run' phase (so it's up to the data provider to
             define how many iterations there will be)
-        * The 'tear_down' block.
+        * The 'tear_down' phase.
     """
 
     def __init__(self, parent_context):

@@ -38,7 +38,7 @@ def test_reportable_details_override():
     rep = SomeReportableEntity()
     assert rep.description == 'But this will'
     assert rep.name == 'A different name'
-    assert rep.tags == set(['and', 'some', 'tags'])
+    assert rep.tags == {'and', 'some', 'tags'}
 
 
 def test_reportable_dynamic_tagging_untagging():
@@ -49,7 +49,7 @@ def test_reportable_dynamic_tagging_untagging():
     rep = SomeReportableEntity()
     rep.tag('and', 'a', 'few', 'labels')
     rep.untag('some', 'other')
-    assert rep.tags == set(['tags', 'and', 'a', 'few', 'labels'])
+    assert rep.tags == {'tags', 'and', 'a', 'few', 'labels'}
 
 
 def test_reportable_inherited_tags():
@@ -68,4 +68,4 @@ def test_reportable_inherited_tags():
     rep.tag('keep_me', 'remove_me_too')
     rep.untag('remove_me', 'remove_me_too')
 
-    assert rep.tags == set(['generic1', 'generic2', 'specific1', 'very_specific1', 'keep_me'])
+    assert rep.tags == {'generic1', 'generic2', 'specific1', 'very_specific1', 'keep_me'}
