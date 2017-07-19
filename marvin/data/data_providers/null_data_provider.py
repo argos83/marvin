@@ -1,5 +1,5 @@
 """Null Data Provider"""
-from marvin.data.data_provider import DataProvider
+from marvin.data import DataProvider, IterationData
 
 
 class NullDataProvider(DataProvider):
@@ -15,14 +15,26 @@ class NullDataProvider(DataProvider):
     def __init__(self, *_args):
         super(NullDataProvider, self).__init__(None)
 
-    def meta(self):
-        return {}
+    @property
+    def name(self):
+        return None
 
+    @property
+    def description(self):
+        return None
+
+    @property
+    def tags(self):
+        return None
+
+    @property
     def setup_data(self):
-        return {}
+        return None
 
-    def iteration_data(self):
-        return [{}]
+    @property
+    def iterations(self):
+        return [IterationData()]
 
+    @property
     def tear_down_data(self):
-        return {}
+        return None

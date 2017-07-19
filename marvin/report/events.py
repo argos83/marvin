@@ -206,10 +206,29 @@ class TestIterationStartedEvent(TestPhaseStartedEvent):
     """Triggered when a test's iteration is about to start"""
     event_type = EventType.TEST_ITERATION_STARTED
 
+    def __init__(self, test_script, data_provider, iteration):
+        super(TestIterationStartedEvent, self).__init__(test_script, data_provider, iteration.data)
+        self._iteration = iteration
+
+    @property
+    def iteration(self):
+        """The IterationData instance with info about this iteration"""
+        return self._iteration
+
 
 class TestIterationEndedEvent(TestPhaseEndedEvent):
     """Triggered when a test's iteration has concluded"""
     event_type = EventType.TEST_ITERATION_ENDED
+
+    def __init__(self, test_script, data_provider, iteration, start_time, status, exception):
+        super(TestIterationEndedEvent, self).__init__(test_script, data_provider, iteration.data,
+                                                      start_time, status, exception)
+        self._iteration = iteration
+
+    @property
+    def iteration(self):
+        """The IterationData instance with info about this iteration"""
+        return self._iteration
 
 
 class TestTearDownStartedEvent(TestPhaseStartedEvent):

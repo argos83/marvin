@@ -10,28 +10,59 @@ def test_default_data_providers():
 
 def test_yaml_data_provider():
     data = DataProviderRegistry.data_provider_for(r('data/example.yaml'))
-    assert data.meta() == {'name': 'Test Name', 'description': 'very descriptive', 'tags': ['bunch', 'of', 'tags']}
-    assert data.setup_data() == {'a_list': [1, 2], 'foo': 'bar'}
-    iterations = [d for d in data.iteration_data()]
-    assert iterations == [{'arg1': 'iteration 1', 'arg2': True}, {'arg1': 'iteration 2', 'arg2': False}]
-    assert data.tear_down_data() == {'foo': 'baz'}
+    assert data.name == 'Test Name'
+    assert data.description == 'very descriptive'
+    assert data.tags == {'bunch', 'of', 'tags'}
+    assert data.setup_data == {'a_list': [1, 2], 'foo': 'bar'}
+    iterations = [(i.name, i.description, i.tags, i.data) for i in data.iterations]
+    assert iterations == [
+        ('First iteration', None, None,
+         {'arg1': 'iteration 1', 'arg2': True}),
+        ('Second Iteration', 'iteration description', {'regression'},
+         {'arg1': 'iteration 2', 'arg2': False})
+    ]
+    assert data.tear_down_data == {'foo': 'baz'}
 
 
 def test_json_data_provider():
     data = DataProviderRegistry.data_provider_for(r('data/example.json'))
-    assert data.setup_data() == {'a_list': [1, 2], 'foo': 'bar'}
-    iterations = [d for d in data.iteration_data()]
-    assert iterations == [{'arg1': 'iteration 1', 'arg2': True}, {'arg1': 'iteration 2', 'arg2': False}]
-    assert data.tear_down_data() == {'foo': 'baz'}
+    assert data.name == 'Test Name'
+    assert data.description == 'very descriptive'
+    assert data.tags == {'bunch', 'of', 'tags'}
+    assert data.setup_data == {'a_list': [1, 2], 'foo': 'bar'}
+    iterations = [(i.name, i.description, i.tags, i.data) for i in data.iterations]
+    assert iterations == [
+        (None, None, None, {'arg1': 'iteration 1', 'arg2': True}),
+        (None, None, None, {'arg1': 'iteration 2', 'arg2': False})
+    ]
+    assert data.tear_down_data == {'foo': 'baz'}
+
+
+def test_load_empty_yaml():
+    data = DataProviderRegistry.data_provider_for(r('data/empty.yaml'))
+    assert data.name is None
+    assert data.description is None
+    assert data.tags is None
+    assert data.setup_data is None
+    iterations = [i for i in data.iterations]
+    assert iterations == []
+    assert data.tear_down_data is None
 
 
 def test_null_data_provider():
     data = DataProviderRegistry.data_provider_for(None)
-    assert data.meta() == {}
-    assert data.setup_data() == {}
-    iterations = [d for d in data.iteration_data()]
-    assert iterations == [{}]
-    assert data.tear_down_data() == {}
+    assert data.name is None
+    assert data.description is None
+    assert data.tags is None
+    assert data.setup_data is None
+    iterations = [i for i in data.iterations]
+    assert len(iterations) == 1
+    iteration = iterations[0]
+    assert iteration.name is None
+    assert iteration.description is None
+    assert iteration.tags is None
+    assert iteration.data is None
+    assert data.tear_down_data is None
 
 
 def test_unimplemented_data_provider():
@@ -44,16 +75,22 @@ def test_unimplemented_data_provider():
     dummy = DummyDataProvider("a_file.md")
 
     with pytest.raises(NotImplementedError):
-        dummy.meta()
+        dummy.name
 
     with pytest.raises(NotImplementedError):
-        dummy.setup_data()
+        dummy.description
 
     with pytest.raises(NotImplementedError):
-        dummy.iteration_data()
+        dummy.tags
 
     with pytest.raises(NotImplementedError):
-        dummy.tear_down_data()
+        dummy.setup_data
+
+    with pytest.raises(NotImplementedError):
+        dummy.iterations
+
+    with pytest.raises(NotImplementedError):
+        dummy.tear_down_data
 
 
 def test_unimplemented_file_data_provider():

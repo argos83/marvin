@@ -60,27 +60,30 @@ Here is a example:
 
 ```yaml
 # test_cases/example_test.yaml
-setup:
+setup_data:
   username: admin-test
   password: hunter2
 
 iterations:
-  - create_user:
-      name: John Iteration 1
-      account_type: viewer
-    should_succeed: True
+  - data:
+      create_user:
+        name: John Iteration 1
+        account_type: viewer
+      should_succeed: True
 
-  - create_user:
-      name: Mary Iteration 2
-      account_type: reporter
-    should_succeed: True
+  - data:
+      create_user:
+        name: Mary Iteration 2
+        account_type: reporter
+      should_succeed: True
 
-  - create_user:
-      name: George Iteration 3
-      account_type: admin
-    should_succeed: False
+  - data:
+      create_user:
+        name: George Iteration 3
+        account_type: admin
+      should_succeed: False
 
-tear_down:
+tear_down_data:
   logout: true
 ```
 

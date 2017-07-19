@@ -1,5 +1,5 @@
 import os
-from marvin.data.data_provider import DataProvider
+from marvin.data import DataProvider, IterationData
 
 
 class FileDataProvider(DataProvider):
@@ -10,7 +10,7 @@ class FileDataProvider(DataProvider):
     def __init__(self, *args, **kargs):
         super(FileDataProvider, self).__init__(*args, **kargs)
         with open(self._source_id, "r") as file_handle:
-            self._data = self.load_obj(file_handle)
+            self._data = self.load_obj(file_handle) or {}
 
     @classmethod
     def supported_extensions(cls):
@@ -27,16 +27,34 @@ class FileDataProvider(DataProvider):
         _, ext = os.path.splitext(source_id)
         return ext and ext[1:].lower() in cls.supported_extensions()
 
-    def meta(self):
-        return self._data.get('meta', {})
+    # Overrides
+    @property
+    def name(self):
+        return self._data.get('name')
 
+    # Overrides
+    @property
+    def description(self):
+        return self._data.get('description')
+
+    # Overrides
+    @property
+    def tags(self):
+        tags = self._data.get('tags')
+        return set(tags) if tags else None
+
+    # Overrides
+    @property
     def setup_data(self):
-        return self._data.get('setup', {})
+        return self._data.get('setup_data')
 
-    # GENERATOR
-    def iteration_data(self):
+    # Overrides
+    @property
+    def iterations(self):
         for it_data in self._data.get('iterations', []):
-            yield it_data
+            yield IterationData(**it_data)
 
+    # Overrides
+    @property
     def tear_down_data(self):
-        return self._data.get('tear_down', {})
+        return self._data.get('tear_down_data')

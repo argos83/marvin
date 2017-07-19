@@ -1,0 +1,13 @@
+name: Data 1
+tags: [data1]
+
+iterations:
+  - name: Iteration A
+    description: Really important iteration
+    tags: [iterationA, regression]
+    data:
+      iteration_data: A
+  - name: Iteration B
+    tags: [iterationB]
+    data:
+      iteration_data: B

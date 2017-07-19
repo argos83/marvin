@@ -1,0 +1,7 @@
+iterations:
+  - data:
+      website: "http://apple.com"
+      expected_title: "Apple"
+  - data:
+      website: "http://google.com"
+      expected_title: "Google"

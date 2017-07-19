@@ -1,18 +1,23 @@
-meta:
-  name: Test Name
-  description: very descriptive
-  tags: [bunch, of, tags]
+name: Test Name
+description: very descriptive
+tags: [bunch, of, tags]
 
-setup:
+setup_data:
   a_list: [1, 2]
   foo: bar
 
 iterations:
-  - arg1: iteration 1
-    arg2: True
+  - name: First iteration
+    data:
+      arg1: iteration 1
+      arg2: True
 
-  - arg1: iteration 2
-    arg2: False
+  - name: Second Iteration
+    description: iteration description
+    tags: [regression]
+    data:
+      arg1: iteration 2
+      arg2: False
 
-tear_down:
+tear_down_data:
   foo: baz

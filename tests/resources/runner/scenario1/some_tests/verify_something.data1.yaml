@@ -1,0 +1,10 @@
+setup_data:
+  name: verify_something.data1.yaml
+
+iterations:
+  - name: yaml-iteration1
+    data:
+      iteration_data: 1
+  - name: yaml-iteration2
+    data:
+      iteration_data: 2

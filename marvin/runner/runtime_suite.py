@@ -31,14 +31,14 @@ class RuntimeSuite(Suite):
         self._load_test_environment_config()
         self._load_hook_module()
         self._root_dir = self.cfg.marvin.get('tests_path', '.')
+        self._tags_matcher = TagsMatcher(*self._get_tag_filters())
 
+    # Override
     def tests(self):
         test_script_class_loader = ClassLoader(TestScript)
 
         python_file_finder = FileFinder(self._root_dir,
                                         filename_matcher=lambda name: name.lower().endswith('.py'))
-
-        tags_matcher = self._tags_matcher()
 
         for python_file in python_file_finder.find_all():
             directory, filename = os.path.split(python_file)
@@ -50,12 +50,16 @@ class RuntimeSuite(Suite):
             if not test_script_class:
                 continue
 
-            if not tags_matcher(test_script_class.class_tags()):
+            if self._tags_matcher.blacklisted(test_script_class.class_tags()):
                 continue
 
             test_script_id = filename_base
             for data_provider in self._find_data_for_test_script(test_script_id, directory):
                 yield test_script_class, data_provider
+
+    # Override
+    def tags_match(self, tags):
+        return self._tags_matcher.matches(tags)
 
     def _find_data_for_test_script(self, test_script_id, test_script_directory):
         data_file_matcher = DataFileMatcher(test_script_id, self._supported_data_file_extensions)
@@ -66,6 +70,9 @@ class RuntimeSuite(Suite):
             provider = DataProviderRegistry.data_provider_for(data_file)
 
             if not provider:
+                continue
+
+            if self._tags_matcher.blacklisted(provider.tags):
                 continue
 
             data_found = True
@@ -108,13 +115,28 @@ class RuntimeSuite(Suite):
         if hasattr(mod, 'main') and callable(mod.main):
             mod.main(self.publisher, self.cfg)
 
-    def _tags_matcher(self):
+    def _get_tag_filters(self):
         filter_config = self.cfg.marvin.get('filter', {})
+        with_tags = set(filter_config.get('with_tags', []))
+        without_tags = set(filter_config.get('without_tags', []))
+        return with_tags, without_tags
 
-        w_tags = set(filter_config.get('with_tags', []))
-        wo_tags = set(filter_config.get('without_tags', []))
 
-        return lambda tags: (not w_tags or (tags & w_tags)) and not (tags & wo_tags)
+class TagsMatcher(object):
+    def __init__(self, with_tags, without_tags):
+        self._with = with_tags
+        self._without = without_tags
+
+    def blacklisted(self, tags):
+        tags = tags or set()
+        return any(tags & self._without)
+
+    def whitelisted(self, tags):
+        tags = tags or set()
+        return not self._with or (tags & self._with)
+
+    def matches(self, tags):
+        return self.whitelisted(tags) and not self.blacklisted(tags)
 
 
 class DataFileMatcher(object):
