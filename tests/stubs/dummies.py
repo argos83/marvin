@@ -1,6 +1,6 @@
 from marvin import Step, Suite, TestScript
-from marvin.data import DataProvider, IterationData
 from marvin.core.context import Context
+from marvin.data import DataProvider, IterationData
 from marvin.core.step_running_context import StepRunningContext
 from marvin.core.test_running_context import TestRunningContext
 
@@ -53,28 +53,43 @@ class DummySuite(Suite):
         return DummyObserver(self.publisher, *event_types)
 
 
-class IterationDataBuilder(object):
-    def __init__(self):
-        self._args = {}
+class DummyTest(TestScript):
+    """Dummy Test used for testing"""
 
-    def with_data(self, **kwargs):
-        self._args['data'] = kwargs
-        return self
+    def setup(self, data):
+        self._do_something(data)
 
-    def with_name(self, name):
-        self._args['name'] = name
-        return self
+    def run(self, data):
+        self._do_something(data)
 
-    def with_description(self, description):
-        self._args['description'] = description
-        return self
+    def tear_down(self, data):
+        self._do_something(data)
 
-    def with_tags(self, *args):
-        self._args['tags'] = args
-        return self
+    def _do_something(self, data):
+        data = data or {}
+        if 'fail' in data:
+            raise Exception(data['fail'])
+        if 'skip' in data:
+            self.skip(data['skip'])
 
-    def build(self):
-        return IterationData(**self._args)
+
+class SampleStep(Step):
+    """Dummy Step used for testing"""
+
+    def run(self, number_1, number_2, operation=int.__add__):
+        return operation(number_1, number_2)
+
+
+class DummyStep(Step):
+    """Another Dummy Step"""
+    def run(self, *args, **kwargs):
+        if 'action' in kwargs:
+            return kwargs.pop('action')(self, *args, **kwargs)
+        elif 'skip' in kwargs:
+            self.skip(kwargs['skip'])
+        elif 'runtime_error' in kwargs:
+            raise RuntimeError(kwargs['runtime_error'])
+        return args, kwargs
 
 
 class DummyData(DataProvider):
@@ -140,42 +155,3 @@ class DummyData(DataProvider):
     def with_tear_down_data(self, **kwargs):
         self._data['tear_down_data'] = kwargs
         return self
-
-
-class DummyTest(TestScript):
-    """Dummy Test used for testing"""
-
-    def setup(self, data):
-        self._do_something(data)
-
-    def run(self, data):
-        self._do_something(data)
-
-    def tear_down(self, data):
-        self._do_something(data)
-
-    def _do_something(self, data):
-        data = data or {}
-        if 'fail' in data:
-            raise Exception(data['fail'])
-        if 'skip' in data:
-            self.skip(data['skip'])
-
-
-class SampleStep(Step):
-    """Dummy Step used for testing"""
-
-    def run(self, number_1, number_2, operation=int.__add__):
-        return operation(number_1, number_2)
-
-
-class DummyStep(Step):
-    """Another Dummy Step"""
-    def run(self, *args, **kwargs):
-        if 'action' in kwargs:
-            return kwargs.pop('action')(self, *args, **kwargs)
-        elif 'skip' in kwargs:
-            self.skip(kwargs['skip'])
-        elif 'runtime_error' in kwargs:
-            raise RuntimeError(kwargs['runtime_error'])
-        return args, kwargs

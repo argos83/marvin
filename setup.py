@@ -19,7 +19,7 @@ setup(name='marvin-test',
       packages=find_packages(exclude=("tests", "examples")),
       include_package_data=True,
       install_requires=['colorama', 'pyyaml'],
-      tests_require=['pytest', 'pytest-cov', 'flake8'],
+      tests_require=['pytest', 'pytest-cov', 'flake8', 'freezegun'],
       zip_safe=False,
       entry_points={
           'console_scripts': [
