@@ -20,7 +20,7 @@ def collect_iteration_names(options):
     runner = Runner(options)
     runner._suite.publisher.subscribe(lambda e: iterations.append(e.iteration.name), EventType.TEST_ITERATION_STARTED)
     runner.run()
-    return iterations
+    return sorted(iterations)
 
 
 def test_suite_generation():
@@ -39,7 +39,7 @@ def test_filtering_from_tags_in_code():
                             with_tags=["tag1", "tag404"],
                             without_tags=[])
     iterations = collect_iteration_names(options)
-    assert iterations == ["yaml-iteration1", "yaml-iteration2", "json-iteration1", "json-iteration2"]
+    assert iterations == ["json-iteration1", "json-iteration2", "yaml-iteration1", "yaml-iteration2"]
 
     options = build_options(tests_path=r('runner/scenario1'), config=None,
                             with_tags=["tag2"],
