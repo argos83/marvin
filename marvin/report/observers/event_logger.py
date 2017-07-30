@@ -6,6 +6,7 @@ from colorama import Fore
 import marvin.util.files
 from marvin.core.status import Status
 from marvin.report import EventType as E
+from marvin.exceptions import ContextSkippedException
 
 
 COLORS = {
@@ -81,17 +82,15 @@ class EventLogger(object):
         self._p("%s%s: %s", indent, step.name, step.description)
 
     def on_step_ended(self, event):
-        if event.exception[2] is not None:
-            if event.exception[0] == ContextSkippedException:
-                self._p(
-                    "%sSKIPPING REASON: %s", self._indent, event.exception[1]
-                )
-            else:
-                self._p(" ".join(traceback.format_tb(event.exception[2])))
         step = event.step
         status = self._colored_status(event.status)
+        indent = INDENT * step.level
+        self._p("%s[%s] %s (%s)", indent, status, step.name, self._format_duration(event.duration))
 
-        self._p("%s[%s] %s (%s)", INDENT * step.level, status, step.name, self._format_duration(event.duration))
+        if event.status == Status.SKIP and event.exception[0] == ContextSkippedException:
+            self._p("%sSkip reason: %s", indent, event.exception[1].reason)
+        elif event.status != Status.PASS and event.exception[2]:
+            self._p(self._format_exception(event.exception))
 
     def on_test_started(self, event):
         test_script = event.test_script
@@ -99,6 +98,9 @@ class EventLogger(object):
         test_header = self._in_color('HEADER', 'TEST')
         self._p("-" * 64)
         self._p("[%s] %s - %s", test_header, test_script.name, test_script.description)
+
+    def _format_exception(self, exc_info):
+        return "%s\n%s" % (repr(exc_info[1]), ''.join(traceback.format_tb(exc_info[2])))
 
     def on_test_ended(self, event):
         test_script = event.test_script
@@ -109,8 +111,7 @@ class EventLogger(object):
         self._suite_status.append(self._current_test)
         if event.status != Status.PASS:
             for exc_info in event.exceptions:
-                exception = "%s\n%s" % (repr(exc_info[1]), ''.join(traceback.format_tb(exc_info[2])))
-                self._current_test["exceptions"].append(exception)
+                self._current_test["exceptions"].append(self._format_exception(exc_info))
         self._p("[%s - %s] %s (%s)", test_header, status, test_script.name, self._format_duration(event.duration))
 
     def on_suite_ended(self, event):

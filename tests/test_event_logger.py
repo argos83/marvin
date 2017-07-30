@@ -4,6 +4,7 @@ import time
 from freezegun import freeze_time
 
 from marvin.core.status import Status
+from marvin.exceptions import ContextSkippedException
 from marvin.report.observers.event_logger import EventLogger
 from marvin.report import events as E
 from marvin.util import compat
@@ -24,6 +25,8 @@ def milliseconds(ms):
 
 
 def test_step_events(ctx):
+    a_traceback = TracebackBuilder().with_frame('file.py', 'raise error', 4).with_frame('other.py', '5/0', 8).build()
+
     step = ctx.step(DummyStep)
     with event_logger_context(ctx) as (publisher, out):
         publisher.notify(E.StepStartedEvent(step, 1, {}))
@@ -34,16 +37,26 @@ def test_step_events(ctx):
     assert out.getvalue().strip() == '[PASS] DummyStep (0 ms)'
 
     with event_logger_context(ctx) as (publisher, out):
-        publisher.notify(E.StepEndedEvent(step, Status.FAIL, 'result', milliseconds(-999)))
-    assert out.getvalue().strip() == '[FAIL] DummyStep (999 ms)'
-
-    with event_logger_context(ctx) as (publisher, out):
-        publisher.notify(E.StepEndedEvent(step, Status.SKIP, 'result', milliseconds(-1000)))
-    assert out.getvalue().strip() == '[SKIP] DummyStep (1.00 s)'
-
-    with event_logger_context(ctx) as (publisher, out):
         publisher.notify(E.StepEndedEvent(step, Status.PASS, 'result', milliseconds(-1566)))
     assert out.getvalue().strip() == '[PASS] DummyStep (1.57 s)'
+
+    some_exception = (ValueError, ValueError('oops'), a_traceback)
+    with event_logger_context(ctx) as (publisher, out):
+        publisher.notify(E.StepEndedEvent(step, Status.FAIL, 'result', milliseconds(-999), some_exception))
+    assert out.getvalue().strip().split('\n') == [
+        '[FAIL] DummyStep (999 ms)',
+        "ValueError('oops',)",
+        '  File "file.py", line 4, in raise error',
+        '  File "other.py", line 8, in 5/0'
+    ]
+
+    skip_exception = (ContextSkippedException, ContextSkippedException(ctx, 'not supported'), a_traceback)
+    with event_logger_context(ctx) as (publisher, out):
+        publisher.notify(E.StepEndedEvent(step, Status.SKIP, 'result', milliseconds(-1000), skip_exception))
+    assert out.getvalue().strip().split('\n') == [
+        '[SKIP] DummyStep (1.00 s)',
+        '  Skip reason: not supported'
+    ]
 
 
 def test_iteration_events(ctx):
