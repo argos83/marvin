@@ -69,19 +69,14 @@ class RuntimeSuite(Suite):
         for data_file in data_file_finder.find_all():
             provider = DataProviderRegistry.data_provider_for(data_file)
 
-            if not provider:
-                continue
-
-            if self._tags_matcher.blacklisted(provider.tags):
+            if not provider or self._tags_matcher.blacklisted(provider.tags):
                 continue
 
             data_found = True
             yield provider
 
         if not data_found:
-            provider = DataProviderRegistry.data_provider_for(None)
-            if provider:
-                yield provider
+            yield DataProviderRegistry.data_provider_for(None)
 
     def _load_marvin_config(self, **options):
         self.cfg.set('marvin', default_config())
