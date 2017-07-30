@@ -19,5 +19,5 @@ after_script:
 jobs:
   include:
     - stage: semantic release
-      python: "3.6"
+      python: "2.7"
       script: ./bin/semantic-release

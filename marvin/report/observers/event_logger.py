@@ -81,6 +81,13 @@ class EventLogger(object):
         self._p("%s%s: %s", indent, step.name, step.description)
 
     def on_step_ended(self, event):
+        if event.exception[2] is not None:
+            if event.exception[0] == ContextSkippedException:
+                self._p(
+                    "%sSKIPPING REASON: %s", self._indent, event.exception[1]
+                )
+            else:
+                self._p(" ".join(traceback.format_tb(event.exception[2])))
         step = event.step
         status = self._colored_status(event.status)
 
