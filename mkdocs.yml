@@ -1,10 +1,18 @@
 site_name: Marvin
 pages:
   - Home: index.md
-  - Documentation: main.md
+  - Basic guide: main.md
   - Advanced:
+    - Data providers: data_providers.md
+    - Data files: data_files.md
+    - Environment configuration: environments.md
+    - Steps: steps.md
     - Custom events loggers and plugins: custom_events_logger.md
   - Contributing: contributing.md
 
 theme: readthedocs
 repo_url: https://github.com/argos83/marvin/
+
+markdown_extensions:
+  - toc:
+      permalink: true
