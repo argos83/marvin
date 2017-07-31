@@ -3,7 +3,7 @@ import pytest
 import marvin
 from marvin.core.status import Status
 from marvin.report import EventType as E
-from tests.stubs import DummyTest, DummySuite, DummyData
+from tests.stubs import DummyTest, DummySuite, DummyData, IterationDataBuilder
 
 
 def test_suite_events():
@@ -39,11 +39,11 @@ def test_skip_exceptions_not_skipping_suite():
 
     suite.add_test(DummyTest)
     suite.add_test(DummyTest, DummyData()
-                   .with_setup(skip='skipped'))
+                   .with_setup_data(skip='skipped'))
     suite.add_test(DummyTest, DummyData()
-                   .with_iteration()
-                   .with_iteration(skip='skipped')
-                   .with_iteration())
+                   .with_iteration(IterationDataBuilder().build())
+                   .with_iteration(IterationDataBuilder().with_data(skip='skipped').build())
+                   .with_iteration(IterationDataBuilder().build()))
     suite.add_test(DummyTest)
 
     suite.execute()
@@ -67,9 +67,9 @@ def test_suite_status_skip_if_all_tests_skipped():
     observer = suite.observer(E.SUITE_ENDED)
 
     suite.add_test(DummyTest, DummyData()
-                   .with_setup(skip='skipped'))
+                   .with_setup_data(skip='skipped'))
     suite.add_test(DummyTest, DummyData()
-                   .with_setup(skip='skipped'))
+                   .with_setup_data(skip='skipped'))
     suite.execute()
     end_event = observer.last_event
     assert end_event.status == Status.SKIP
@@ -80,8 +80,10 @@ def test_suite_status_fail_if_one_test_fails():
     observer = suite.observer(E.TEST_ENDED, E.SUITE_ENDED)
 
     suite.add_test(DummyTest)  # passes
-    suite.add_test(DummyTest, DummyData().with_setup(skip='skipped'))  # skipped
-    suite.add_test(DummyTest, DummyData().with_iteration(fail='oops'))  # fails
+    suite.add_test(DummyTest, DummyData().with_setup_data(skip='skipped'))  # skipped
+    suite.add_test(DummyTest, DummyData().with_iteration(
+        IterationDataBuilder().with_data(fail='oops').build())  # fails
+    )
     suite.add_test(DummyTest)  # passes
     suite.execute()
 

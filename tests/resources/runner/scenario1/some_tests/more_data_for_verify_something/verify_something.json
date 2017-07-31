@@ -1,0 +1,16 @@
+{
+    "setup_data": {"name": "verify_something.json"},
+
+    "iterations": [
+        {
+            "name": "json-iteration1",
+            "data": {"iteration_data": 1}
+        },
+        {
+            "name": "json-iteration2",
+            "data": {"iteration_data": 2}
+        }
+    ],
+
+    "tear_down_data": {}
+}

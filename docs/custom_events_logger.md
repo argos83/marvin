@@ -1,8 +1,10 @@
 # Custom Events Logger and Plugins
 
-`Marvin` has a built-in event logger which is the output you see when you execute test cases, but you can add your custom `Events Logger` to handle test information and send it to a database, to a `Grafana` server or whatever you want.
+`Marvin` has a built-in event logger which is the output you see when you execute test cases, but you can add your
+custom `Events Logger` to handle test information and send it to a database, to a `Grafana` server or whatever you want.
 
-If you don't want to read this, you can check it on the [examples](../examples) folder.
+If you don't want to read this, you can check it in the
+[examples](https://github.com/argos83/marvin/tree/master/examples) folder.
 
 ## Setting Up
 
@@ -26,12 +28,15 @@ def main(publisher, cfg):
 ```
 
 `Marvin` will try to find and execute a `main` method defined on the `hook` module and it will pass two parameters:
-  * **publisher**: This is the notification object, where you can subscribe to the different events that `Marvin` produces. We will see an example later.
-  * **cfg**: The current configuration that `Marvin` is handling, so you can access any value that tests have access too.
+  * **publisher**: This is the notification object, where you can subscribe to the different events that `Marvin`
+  produces. We will see an example later.
+  * **cfg**: The current configuration that `Marvin` is handling, so you can access any value that tests have access
+  too.
 
 ## Configuring Custom Loggers
 
-Given that simple `hook` example, we now are going to extend that so we can subscribe to events and be notified when they are executed.
+Given that simple `hook` example, we now are going to extend that so we can subscribe to events and be notified when
+they are executed.
 
 First, we are going to create a new class and then call it on `main` method:
 
@@ -71,7 +76,8 @@ You use the `subscribe` method on the `publisher` object to link a method with a
 
 You can check the full event list and their signatures below.
 
-To access the `config` object, you use the following syntax `cfg.marvin`. For example, if you want to know the path of the tests that are being executed, you would use the following:
+To access the `config` object, you use the following syntax `cfg.marvin`. For example, if you want to know the path of
+the tests that are being executed, you would use the following:
 
 ```python
 cfg.marvin["tests_path"]

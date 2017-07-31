@@ -18,23 +18,44 @@ class DataProvider(object):
         """Returns true if this data provider supports loading the give data source id"""
         raise NotImplementedError("Method must be redefined in %s" % cls.__name__)
 
-    def meta(self):
+    @property
+    def name(self):
         """
-        Returns a dictionary with meta information for the test. Keys might include:
-            * name: overrides the test case name
-            * description: overrides the test case description
-            * tags: extends the test case tag set
+        Overrides the test case name
+        :return: [None|String]
         """
         raise NotImplementedError("Method must be redefined in %s" % self.__class__.__name__)
 
+    @property
+    def description(self):
+        """
+        Overrides the test case description
+        :return: [None|String]
+        """
+        raise NotImplementedError("Method must be redefined in %s" % self.__class__.__name__)
+
+    @property
+    def tags(self):
+        """
+        Extends the test case tag set
+        :return: [None|iterable[String]]
+        """
+        raise NotImplementedError("Method must be redefined in %s" % self.__class__.__name__)
+
+    @property
     def setup_data(self):
-        """Returns a python object with the data to be passed to the 'setup' block of the Test Script"""
+        """Returns a python object with the data to be passed to the 'setup' phase of the Test Script"""
         raise NotImplementedError("Method must be redefined in %s" % self.__class__.__name__)
 
-    def iteration_data(self):
-        """Returns python object's as a list or generator for each of the iterations"""
+    @property
+    def iterations(self):
+        """
+        Returns python object's as a list or generator for each of the iterations
+        Each yielded item is an instance of marvin.data.IterationData:
+        """
         raise NotImplementedError("Method must be redefined in %s" % self.__class__.__name__)
 
+    @property
     def tear_down_data(self):
-        """Returns a python object with the data to be passed to the 'tear_down' block of the Test Script"""
+        """Returns a python object with the data to be passed to the 'tear_down' phase of the Test Script"""
         raise NotImplementedError("Method must be redefined %s" % self.__class__.__name__)

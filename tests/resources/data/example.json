@@ -1,21 +1,29 @@
 {
-  "setup": {
+  "name": "Test Name",
+  "description": "very descriptive",
+  "tags": ["bunch", "of", "tags"],
+
+  "setup_data": {
     "a_list": [1, 2],
     "foo": "bar"
   },
 
   "iterations": [
     {
-      "arg1": "iteration 1",
-      "arg2": true
+      "data": {
+        "arg1": "iteration 1",
+        "arg2": true
+      }
     },
     {
-      "arg1": "iteration 2",
-      "arg2": false
+      "data": {
+        "arg1": "iteration 2",
+        "arg2": false
+      }
     }
   ],
 
-  "tear_down": {
+  "tear_down_data": {
     "foo": "baz"
   }
 }

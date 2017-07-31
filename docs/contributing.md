@@ -93,8 +93,9 @@ mkdocs serve
 
 #### Note
 
-The `docs/contributing.md` file is a [symbolic link][] to the
-`.github/CONTRIBUTING.md` file, where the actual content lives.
+The `.github/CONTRIBUTING.md` file is a [symbolic link][] to the
+`docs/contributing.md` file, where the actual content lives.
+
 This is to be able to serve the same content also as
 [GitHub contributing guidelines][] when someone opens a Pull Request.
 

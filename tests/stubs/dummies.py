@@ -1,6 +1,6 @@
 from marvin import Step, Suite, TestScript
-from marvin.data.data_provider import DataProvider
 from marvin.core.context import Context
+from marvin.data import DataProvider, IterationData
 from marvin.core.step_running_context import StepRunningContext
 from marvin.core.test_running_context import TestRunningContext
 
@@ -53,50 +53,6 @@ class DummySuite(Suite):
         return DummyObserver(self.publisher, *event_types)
 
 
-class DummyData(DataProvider):
-    """In-memory data provider that can be built dynamically"""
-    def __init__(self):
-        super(DummyData, self).__init__(None)
-        self._data = {
-            'meta': {},
-            'setup': {},
-            'iterations': [],
-            'tear_down': {}
-        }
-
-    # Override
-    def meta(self):
-        return self._data['meta']
-
-    # Override
-    def setup_data(self):
-        return self._data['setup']
-
-    # Override
-    def iteration_data(self):
-        return self._data['iterations'] or [{}]
-
-    # Override
-    def tear_down_data(self):
-        return self._data['tear_down']
-
-    def with_meta(self, **kwargs):
-        self._data['meta'] = kwargs
-        return self
-
-    def with_setup(self, **kwargs):
-        self._data['setup'] = kwargs
-        return self
-
-    def with_iteration(self, **kwargs):
-        self._data['iterations'].append(kwargs)
-        return self
-
-    def with_tear_down(self, **kwargs):
-        self._data['tear_down'] = kwargs
-        return self
-
-
 class DummyTest(TestScript):
     """Dummy Test used for testing"""
 
@@ -110,6 +66,7 @@ class DummyTest(TestScript):
         self._do_something(data)
 
     def _do_something(self, data):
+        data = data or {}
         if 'fail' in data:
             raise Exception(data['fail'])
         if 'skip' in data:
@@ -133,3 +90,68 @@ class DummyStep(Step):
         elif 'runtime_error' in kwargs:
             raise RuntimeError(kwargs['runtime_error'])
         return args, kwargs
+
+
+class DummyData(DataProvider):
+    """In-memory data provider that can be built dynamically"""
+    def __init__(self):
+        super(DummyData, self).__init__(None)
+        self._data = {
+            'name': None,
+            'description': None,
+            'tags': None,
+            'setup_data': {},
+            'iterations': [],
+            'tear_down_data': {}
+        }
+
+    @property
+    def name(self):
+        return self._data['name']
+
+    @property
+    def description(self):
+        return self._data['description']
+
+    @property
+    def tags(self):
+        return self._data['tags']
+
+    # Override
+    @property
+    def setup_data(self):
+        return self._data['setup_data']
+
+    # Override
+    @property
+    def iterations(self):
+        return self._data['iterations'] or [IterationData()]
+
+    # Override
+    @property
+    def tear_down_data(self):
+        return self._data['tear_down_data']
+
+    def with_name(self, name):
+        self._data['name'] = name
+        return self
+
+    def with_description(self, description):
+        self._data['description'] = description
+        return self
+
+    def wih_tags(self, *args):
+        self._data['tags'] = set(args)
+        return self
+
+    def with_setup_data(self, **kwargs):
+        self._data['setup_data'] = kwargs
+        return self
+
+    def with_iteration(self, iteration):
+        self._data['iterations'].append(iteration)
+        return self
+
+    def with_tear_down_data(self, **kwargs):
+        self._data['tear_down_data'] = kwargs
+        return self

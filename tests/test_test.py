@@ -2,7 +2,7 @@ import marvin
 from marvin.core.status import Status
 from marvin.exceptions import ContextSkippedException
 from marvin.report import EventType as E
-from tests.stubs import DummyTest, DummyData, DummyStep
+from tests.stubs import DummyTest, DummyData, DummyStep, IterationDataBuilder
 
 
 ALL_TEST_EVENTS = [E.TEST_STARTED,
@@ -13,9 +13,9 @@ ALL_TEST_EVENTS = [E.TEST_STARTED,
 
 ALL_END_EVENTS = [E.TEST_SETUP_ENDED, E.TEST_ITERATION_ENDED, E.TEST_TEARDOWN_ENDED, E.TEST_ENDED]
 
-ALL_BLOCK_START_EVENTS = [E.TEST_SETUP_STARTED,  E.TEST_ITERATION_STARTED, E.TEST_TEARDOWN_STARTED]
+ALL_PHASE_START_EVENTS = [E.TEST_SETUP_STARTED, E.TEST_ITERATION_STARTED, E.TEST_TEARDOWN_STARTED]
 
-ALL_BLOCK_END_EVENTS = [E.TEST_SETUP_ENDED, E.TEST_ITERATION_ENDED, E.TEST_TEARDOWN_ENDED]
+ALL_PHASE_END_EVENTS = [E.TEST_SETUP_ENDED, E.TEST_ITERATION_ENDED, E.TEST_TEARDOWN_ENDED]
 
 
 def test_test_basic(ctx):
@@ -39,15 +39,94 @@ def test_test_events(ctx):
                for e in observer.events if e.event_type in ALL_END_EVENTS)
 
 
-def test_access_data_in_block_events(ctx):
-    observer = ctx.observer(*(ALL_BLOCK_START_EVENTS + ALL_BLOCK_END_EVENTS))
-    observer.hook(lambda e: e.data['foo'].append('bar'), *ALL_BLOCK_START_EVENTS)
+def test_access_data_in_phase_events(ctx):
+    observer = ctx.observer(*(ALL_PHASE_START_EVENTS + ALL_PHASE_END_EVENTS))
+    observer.hook(lambda e: e.data['foo'].append('bar'), *ALL_PHASE_START_EVENTS)
 
     ctx.test(DummyTest).execute(DummyData()
-                                .with_setup(foo=[])
-                                .with_iteration(foo=[])
-                                .with_tear_down(foo=[]))
+                                .with_setup_data(foo=[])
+                                .with_iteration(IterationDataBuilder().with_data(foo=[]).build())
+                                .with_tear_down_data(foo=[]))
     assert all(e.data['foo'] == ['bar'] for e in observer.events)
+
+
+def test_setup_events(ctx):
+    observer = ctx.observer(E.TEST_SETUP_STARTED, E.TEST_SETUP_ENDED)
+    script = ctx.test(DummyTest)
+    data = DummyData().with_setup_data(fail='oops')
+    script.execute(data)
+
+    start, end = observer.events
+
+    assert start.event_type == E.TEST_SETUP_STARTED
+    assert start.data == {'fail': 'oops'}
+    assert start.test_script == script
+    assert start.data_provider == data
+    assert start.timestamp == end.start_time
+
+    assert end.event_type == E.TEST_SETUP_ENDED
+    assert end.status == 'FAIL'
+    assert end.data == {'fail': 'oops'}
+    assert end.test_script == script
+    assert end.data_provider == data
+    assert end.duration == end.timestamp - end.start_time
+    assert isinstance(end.exception[1], Exception)
+
+
+def test_tear_down_events(ctx):
+    observer = ctx.observer(E.TEST_TEARDOWN_STARTED, E.TEST_TEARDOWN_ENDED)
+    script = ctx.test(DummyTest)
+    data = DummyData().with_tear_down_data(fail='oops')
+    script.execute(data)
+
+    start, end = observer.events
+
+    assert start.event_type == E.TEST_TEARDOWN_STARTED
+    assert start.data == {'fail': 'oops'}
+    assert start.test_script == script
+    assert start.data_provider == data
+    assert start.timestamp == end.start_time
+
+    assert end.event_type == E.TEST_TEARDOWN_ENDED
+    assert end.status == 'FAIL'
+    assert end.data == {'fail': 'oops'}
+    assert end.test_script == script
+    assert end.data_provider == data
+    assert end.duration == end.timestamp - end.start_time
+    assert isinstance(end.exception[1], Exception)
+
+
+def test_iteration_events(ctx):
+    observer = ctx.observer(E.TEST_ITERATION_STARTED, E.TEST_ITERATION_ENDED)
+    script = ctx.test(DummyTest)
+    data = DummyData().with_iteration(
+        IterationDataBuilder().with_name('new name')
+                              .with_description('new description')
+                              .with_tags('tag1', 'tag2')
+                              .with_data(foo='bar')
+        .build()).with_iteration(IterationDataBuilder().with_data(fail='ouch').build())
+    script.execute(data)
+
+    it1_start, it1_end, it2_start, it2_end = observer.events
+
+    assert it1_start.event_type == E.TEST_ITERATION_STARTED
+    assert it1_start.data == it1_end.data == {'foo': 'bar'}
+    assert it1_start.test_script == it1_end.test_script == script
+    assert it1_start.data_provider == it1_end.data_provider == data
+    assert it1_start.timestamp == it1_end.start_time
+
+    assert it1_end.event_type == E.TEST_ITERATION_ENDED
+    assert it1_end.status == 'PASS'
+    assert it1_end.duration == it1_end.timestamp - it1_end.start_time
+    assert it1_end.exception == (None, None, None)
+
+    assert it1_start.iteration.name == it1_end.iteration.name == 'new name'
+    assert it1_start.iteration.description == it1_end.iteration.description == 'new description'
+    assert it1_start.iteration.tags == it1_end.iteration.tags == {'tag1', 'tag2'}
+
+    assert it2_start.iteration.name is None and it2_end.iteration.name is None
+    assert it2_start.iteration.description is None and it2_end.iteration.description is None
+    assert it2_start.iteration.tags is None and it2_end.iteration.tags is None
 
 
 def test_unimplemented_methods(ctx):
@@ -72,7 +151,7 @@ def test_unimplemented_methods(ctx):
 def test_fail_setup_skips_iteration_but_not_tear_down(ctx):
     observer = ctx.observer(*ALL_TEST_EVENTS)
 
-    ctx.test(DummyTest).execute(DummyData().with_setup(fail='kaput'))
+    ctx.test(DummyTest).execute(DummyData().with_setup_data(fail='kaput'))
 
     triggered_events = [e.event_type for e in observer.events]
     assert triggered_events == [E.TEST_STARTED,
@@ -92,7 +171,7 @@ def test_fail_setup_skips_iteration_but_not_tear_down(ctx):
 def test_skip_setup_skips_everything(ctx):
     observer = ctx.observer(*ALL_TEST_EVENTS)
 
-    ctx.test(DummyTest).execute(DummyData().with_setup(skip='move on'))
+    ctx.test(DummyTest).execute(DummyData().with_setup_data(skip='move on'))
 
     triggered_events = [e.event_type for e in observer.events]
     assert triggered_events == [E.TEST_STARTED,
@@ -112,9 +191,9 @@ def test_failed_iteration_do_not_affect_other_iterations(ctx):
     observer = ctx.observer(*ALL_END_EVENTS)
 
     ctx.test(DummyTest).execute(DummyData()
-                                .with_iteration(foo='bar')
-                                .with_iteration(fail='oops')
-                                .with_iteration(foo='baz'))
+                                .with_iteration(IterationDataBuilder().with_data(foo='bar').build())
+                                .with_iteration(IterationDataBuilder().with_data(fail='oops').build())
+                                .with_iteration(IterationDataBuilder().with_data(foo='baz').build()))
 
     triggered_events = [e.event_type for e in observer.events]
     assert triggered_events == [E.TEST_SETUP_ENDED,
@@ -137,9 +216,9 @@ def test_skip_iteration_do_not_affect_results(ctx):
     observer = ctx.observer(*ALL_END_EVENTS)
 
     ctx.test(DummyTest).execute(DummyData()
-                                .with_iteration(foo='bar')
-                                .with_iteration(skip='wip')
-                                .with_iteration(foo='baz'))
+                                .with_iteration(IterationDataBuilder().with_data(foo='bar').build())
+                                .with_iteration(IterationDataBuilder().with_data(skip='wip').build())
+                                .with_iteration(IterationDataBuilder().with_data(foo='baz').build()))
 
     triggered_events = [e.event_type for e in observer.events]
     assert triggered_events == [E.TEST_SETUP_ENDED,
@@ -185,7 +264,10 @@ def test_test_meta_extended_from_data(ctx):
         TAGS = ['a', 'few', 'tags']
 
     test = ctx.test(SimpleTest)
-    test.execute(DummyData().with_meta(name='New Name', description='New description', tags=['more', 'tags', 4]))
+    test.execute(DummyData()
+                 .with_name('New Name')
+                 .with_description('New description')
+                 .wih_tags('more', 'tags', 4))
 
     assert test.name == 'New Name'
     assert test.description == 'New description'
