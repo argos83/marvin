@@ -3,7 +3,7 @@ class IterationData(object):
     Models an iteration data and meta data.
     """
 
-    def __init__(self, data=None, name=None, description=None, tags=None):
+    def __init__(self, data=None, name=None, description=None, tags=None, **_kwargs):
         self._data = data
         self._name = name
         self._description = description
