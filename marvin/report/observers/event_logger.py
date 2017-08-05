@@ -90,7 +90,7 @@ class EventLogger(object):
         if event.status == Status.SKIP and event.exception[0] == ContextSkippedException:
             self._p("%sSkip reason: %s", indent, event.exception[1].reason)
         elif event.status != Status.PASS and event.exception[2]:
-            self._p(self._format_exception(event.exception))
+            self._p("%s", self._format_exception(event.exception))
 
     def on_test_started(self, event):
         test_script = event.test_script
@@ -126,7 +126,7 @@ class EventLogger(object):
             iall = ipass + ifail + iskip
             iteration_summary = "%d iteration(s) (%d pass - %d fail - %d skip)" % (iall, ipass, ifail, iskip)
             self._p("[%s] %s: %s", status, test['name'], iteration_summary)
-            [self._p(exception) for exception in test['exceptions']]
+            [self._p("%s", exception) for exception in test['exceptions']]
 
     def _get_phase_suffix(self, event):
         suffix = ""
