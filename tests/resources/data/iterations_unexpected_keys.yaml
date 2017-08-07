@@ -1,0 +1,13 @@
+name: Test unexpected keys
+description: Should not fail
+tags: [bunch, of, tags]
+
+setup_data:
+  a_list: [1, 2]
+
+iterations:
+  - name: First iteration
+    unexpected_key: no_data_key
+
+tear_down_data:
+  foo: baz

@@ -104,3 +104,16 @@ def test_unimplemented_file_data_provider():
 
     with pytest.raises(NotImplementedError):
         DummyFileDataProvider(r('data/example.json'))
+
+
+def test_iterations_no_data_key_and_unexpected_keys():
+    data = DataProviderRegistry.data_provider_for(r('data/iterations_unexpected_keys.yaml'))
+    assert data.name == 'Test unexpected keys'
+    assert data.description == 'Should not fail'
+    assert data.tags == {'bunch', 'of', 'tags'}
+    assert data.setup_data == {'a_list': [1, 2]}
+    iterations = [(i.name, i.description, i.tags, i.data) for i in data.iterations]
+    assert iterations == [
+        ('First iteration', None, None, None)
+    ]
+    assert data.tear_down_data == {'foo': 'baz'}
