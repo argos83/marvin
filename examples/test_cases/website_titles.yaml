@@ -1,7 +1,9 @@
 iterations:
-  - data:
+  - name: Testing apple.com title
+    data:
       website: "http://apple.com"
       expected_title: "Apple"
-  - data:
+  - name: Testing google.com title
+    data:
       website: "http://google.com"
       expected_title: "Google"
